@@ -1,0 +1,1269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Eccentric Footing Design (ACI 318)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f4ef; --panel:#ffffff; --ink:#1d2329; --muted:#5d6670; --line:#d9d6cc;
+  --accent:#1f4e79; --accent-soft:#e6eef6;
+  --pass:#1e7a46; --pass-bg:#e3f3e9; --fail:#b3261e; --fail-bg:#fbe5e3; --info:#7a5a00; --info-bg:#fbf1d6;
+}
+*{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "IBM Plex Sans",system-ui,sans-serif}
+header{background:var(--ink);color:#fff;padding:22px 28px}
+header h1{margin:0;font-size:21px;font-weight:600}
+header p{margin:4px 0 0;color:#b9c2cb;font-size:13.5px}
+.wrap{display:grid;grid-template-columns:370px 1fr;gap:22px;padding:22px 28px;max-width:1500px;margin:0 auto}
+@media (max-width:980px){.wrap{grid-template-columns:1fr;padding:16px}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:6px}
+aside.panel{padding:16px 18px;align-self:start;position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto}
+@media (max-width:980px){aside.panel{position:static;max-height:none}}
+h2{font-size:15px;margin:0 0 10px;font-weight:600;letter-spacing:.2px}
+h3{font-size:12px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin:16px 0 6px;font-weight:600}
+.field{display:grid;grid-template-columns:1fr 104px 46px;align-items:center;gap:6px;margin:5px 0}
+.field label{font-size:13.5px}
+.field input,.field select{width:100%;padding:5px 6px;border:1px solid var(--line);border-radius:4px;font:13.5px "IBM Plex Mono",monospace;background:#fcfbf8}
+.field select,.field input[type=text]{font-family:"IBM Plex Sans",sans-serif}
+.field .u{font-size:12px;color:var(--muted)}
+.field.wide{grid-template-columns:1fr 160px}
+.btns{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+button{font:500 13px "IBM Plex Sans",sans-serif;padding:7px 12px;border-radius:4px;border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer}
+button.ghost{background:#fff;color:var(--accent)}
+button.calc-btn{width:100%;padding:11px;font-size:15px;font-weight:600;margin-top:16px}
+button:disabled{opacity:.45;cursor:not-allowed}
+.note{font-size:12.5px;color:var(--muted);margin-top:8px}
+.sub{font-size:12.5px;font-weight:600;color:var(--accent);margin:12px 0 2px}
+.hint{font-size:12px;line-height:1.45;margin:6px 0 4px;padding:6px 9px;border-radius:4px;background:#f4f6f8;border-left:3px solid var(--muted)}
+.hint.ok{border-left-color:var(--pass);background:#f1f8f3}
+.hint.bad{border-left-color:var(--fail);background:#fdf2f1}
+.hint b{font-weight:600}
+.hints-stale .hint{opacity:.45}
+#toast{font-size:12.5px;min-height:18px;margin-top:6px;color:var(--accent)}
+main{display:flex;flex-direction:column;gap:22px;min-width:0}
+#results{display:flex;flex-direction:column;gap:22px}
+.empty{padding:60px 30px;text-align:center;color:var(--muted)}
+.empty b{display:block;color:var(--ink);font-size:17px;margin-bottom:6px}
+.stale{background:var(--info-bg);border:1px solid #ecd58f;color:var(--info);border-radius:6px;padding:10px 16px;font-size:14px}
+.verdict{display:flex;align-items:center;gap:18px;padding:18px 22px;border-radius:6px;border:1px solid}
+.verdict.pass{background:var(--pass-bg);border-color:#a9d6b9}
+.verdict.fail{background:var(--fail-bg);border-color:#efb3ad}
+.verdict .big{font-size:26px;font-weight:600;letter-spacing:.5px}
+.verdict.pass .big{color:var(--pass)} .verdict.fail .big{color:var(--fail)}
+.verdict .txt{font-size:14px}
+section.panel{padding:18px 22px}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 9px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-weight:600;background:#f0eee7;font-size:12.5px}
+td.num{font-family:"IBM Plex Mono",monospace}
+tr.grp td{background:#f7f6f1;font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--muted)}
+tr.total td{font-weight:600;background:#f7f6f1;border-top:2px solid var(--ink)}
+.tscroll{overflow-x:auto}
+.badge{display:inline-block;padding:2px 9px;border-radius:3px;font:600 12px "IBM Plex Sans",sans-serif;letter-spacing:.4px}
+.badge.pass{background:var(--pass-bg);color:var(--pass)}
+.badge.fail{background:var(--fail-bg);color:var(--fail)}
+.badge.info{background:var(--info-bg);color:var(--info)}
+.part{font-size:13px;text-transform:uppercase;letter-spacing:.8px;color:var(--accent);margin:22px 0 4px;font-weight:600;border-bottom:2px solid var(--accent-soft);padding-bottom:4px}
+.part:first-child{margin-top:0}
+.step{border-top:1px solid var(--line);padding:14px 0}
+.part + .step{border-top:none}
+.step-h{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.step-h b{font-size:14.5px}
+.ref{font-size:12px;color:var(--accent);background:var(--accent-soft);padding:2px 8px;border-radius:3px}
+.calc{font-family:"IBM Plex Mono",monospace;font-size:13px;background:#faf9f5;border:1px solid #ebe8de;border-radius:4px;padding:9px 12px;margin-top:8px;overflow-x:auto;line-height:1.75}
+.calc .r{font-weight:600;color:var(--accent)}
+.step p{margin:6px 0 0;font-size:13.5px;color:#333a41}
+.figs{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.figs svg,.detail svg{max-width:100%;height:auto;background:#fff}
+.detail{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;align-items:flex-start}
+.detail figure{margin:0;text-align:center}
+.detail figcaption{font-size:12.5px;color:var(--muted);margin-top:4px}
+h4{font-size:13.5px;margin:18px 0 8px}
+.refs li{font-size:13px;margin:3px 0}
+.footnote{font-size:12.5px;color:var(--muted);text-align:center;margin:4px 0 0;padding-top:10px;border-top:1px solid var(--line)}
+</style>
+</head>
+<body>
+<header>
+  <h1>Eccentric Pad Footing Design to ACI 318</h1>
+  <p>Isolated footing with the column off centre: soil pressure with partial contact, stability, flexure both ways including hogging, one-way shear, edge and corner punching, bearing, dowels and detailing. SI units.</p>
+</header>
+
+<div class="wrap">
+<aside class="panel">
+<form id="form" autocomplete="off">
+  <h2>Input parameters</h2>
+
+  <h3>Job</h3>
+  <div class="field wide"><label>Project</label><input id="proj" type="text" placeholder="optional"></div>
+  <div class="field wide"><label>Footing mark</label><input id="mark" type="text" placeholder="e.g. F1"></div>
+
+  <h3>Code</h3>
+  <div class="field wide"><label>ACI 318 edition</label>
+    <select id="ed"><option value="25">ACI 318-25</option><option value="19">ACI 318-19</option></select></div>
+  <div class="field wide"><label>Size effect in shear</label>
+    <select id="sizeEff"><option value="neglect">Neglect (13.2.6.2)</option><option value="apply">Apply λ<sub>s</sub></option></select></div>
+
+  <h3>Column</h3>
+  <div class="field"><label>Column size along L, c<sub>1</sub></label><input id="c1" type="number" step="any"><span class="u">mm</span></div>
+  <div class="field"><label>Column size along B, c<sub>2</sub></label><input id="c2" type="number" step="any"><span class="u">mm</span></div>
+  <div class="field"><label>Offset from footing centre, x<sub>c</sub></label><input id="ox" type="number" step="any"><span class="u">mm</span></div>
+  <div class="field"><label>Offset from footing centre, y<sub>c</sub></label><input id="oy" type="number" step="any"><span class="u">mm</span></div>
+  <p class="note" style="margin-top:2px">Positive x<sub>c</sub> moves the column toward the +x end of L; positive y<sub>c</sub> toward the +y side of B. A column at the footing edge has x<sub>c</sub> = (L − c<sub>1</sub>)/2.</p>
+  <div class="hint" id="hint_offset" hidden></div>
+  <div class="field"><label>Column f'<sub>c</sub></label><input id="fcc" type="number" step="any"><span class="u">MPa</span></div>
+  <div class="field"><label>Number of dowels</label><input id="nd" type="number" step="1" min="4"><span class="u">nos</span></div>
+  <div class="field"><label>Dowel diameter</label><input id="dbd" type="number" step="any"><span class="u">mm</span></div>
+
+  <h3>Service loads (for soil)</h3>
+  <div class="field"><label>Dead load, P<sub>D</sub></label><input id="PD" type="number" step="any"><span class="u">kN</span></div>
+  <div class="field"><label>Live load, P<sub>L</sub></label><input id="PL" type="number" step="any" min="0"><span class="u">kN</span></div>
+  <div class="field"><label>Moment about x, M<sub>sx</sub></label><input id="Msx" type="number" step="any"><span class="u">kN·m</span></div>
+  <div class="field"><label>Moment about y, M<sub>sy</sub></label><input id="Msy" type="number" step="any"><span class="u">kN·m</span></div>
+  <div class="field"><label>Horizontal load along x, H<sub>x</sub></label><input id="Hx" type="number" step="any"><span class="u">kN</span></div>
+  <div class="field"><label>Horizontal load along y, H<sub>y</sub></label><input id="Hy" type="number" step="any"><span class="u">kN</span></div>
+
+  <h3>Factored loads (for concrete)</h3>
+  <div class="field"><label>Axial load, P<sub>u</sub></label><input id="Pu" type="number" step="any"><span class="u">kN</span></div>
+  <div class="field"><label>Moment about x, M<sub>ux</sub></label><input id="Mux" type="number" step="any"><span class="u">kN·m</span></div>
+  <div class="field"><label>Moment about y, M<sub>uy</sub></label><input id="Muy" type="number" step="any"><span class="u">kN·m</span></div>
+  <div class="field"><label>Shear along x, V<sub>ux</sub></label><input id="Vux" type="number" step="any"><span class="u">kN</span></div>
+  <div class="field"><label>Shear along y, V<sub>uy</sub></label><input id="Vuy" type="number" step="any"><span class="u">kN</span></div>
+  <p class="note" style="margin-top:2px">Signs matter. x runs along L and y along B. A positive M about y raises the pressure at the +x edge and a positive M about x at the +y edge; positive H and V act toward +x or +y. Enter moments that act against the column offset as negative to see how they balance it.</p>
+
+  <h3>Soil</h3>
+  <div class="field"><label>Allowable bearing pressure, q<sub>a</sub></label><input id="qa" type="number" step="any"><span class="u">kPa</span></div>
+  <div class="field wide"><label>q<sub>a</sub> is</label>
+    <select id="qtype"><option value="net">Net allowable</option><option value="gross">Gross allowable</option></select></div>
+  <div class="field"><label>Depth to footing base, D<sub>f</sub></label><input id="Df" type="number" step="any"><span class="u">m</span></div>
+  <div class="field"><label>Soil unit weight, γ<sub>s</sub></label><input id="gs" type="number" step="any"><span class="u">kN/m³</span></div>
+  <div class="field"><label>Base friction coefficient, μ</label><input id="mu" type="number" step="any"><span class="u">–</span></div>
+  <div class="field"><label>Minimum base in contact</label><input id="minContact" type="number" step="any" min="0" max="100"><span class="u">%</span></div>
+
+  <h3>Materials</h3>
+  <div class="field"><label>Footing f'<sub>c</sub></label><input id="fc" type="number" step="any"><span class="u">MPa</span></div>
+  <div class="field"><label>Bar yield, f<sub>y</sub></label><input id="fy" type="number" step="any"><span class="u">MPa</span></div>
+  <div class="field"><label>Steel modulus, E<sub>s</sub></label><input id="Es" type="number" step="any"><span class="u">MPa</span></div>
+  <div class="field"><label>Concrete strain, ε<sub>cu</sub></label><input id="ecu" type="number" step="any"><span class="u">–</span></div>
+  <div class="field"><label>Concrete unit weight, γ<sub>c</sub></label><input id="gc" type="number" step="any"><span class="u">kN/m³</span></div>
+
+  <h3>Footing</h3>
+  <div class="field"><label>Length, L (along x)</label><input id="L" type="number" step="any"><span class="u">m</span></div>
+  <div class="field"><label>Width, B (along y)</label><input id="B" type="number" step="any"><span class="u">m</span></div>
+  <div class="hint" id="hint_size" hidden></div>
+  <div class="field"><label>Thickness, h</label><input id="h" type="number" step="any"><span class="u">mm</span></div>
+  <div class="hint" id="hint_depth" hidden></div>
+
+  <h3>Bottom reinforcement</h3>
+  <div class="sub">Bars along L (spaced across B)</div>
+  <div class="field"><label>Number of bars</label><input id="nL" type="number" step="1" min="2"><span class="u">nos</span></div>
+  <div class="field"><label>Bar diameter</label><input id="dbL" type="number" step="any"><span class="u">mm</span></div>
+  <div class="hint" id="hint_barL" hidden></div>
+  <div class="sub">Bars along B (spaced across L)</div>
+  <div class="field"><label>Number of bars</label><input id="nB" type="number" step="1" min="2"><span class="u">nos</span></div>
+  <div class="field"><label>Bar diameter</label><input id="dbB" type="number" step="any"><span class="u">mm</span></div>
+  <div class="hint" id="hint_barB" hidden></div>
+  <div class="field wide"><label>Bottom layer</label>
+    <select id="bottom"><option value="L">Bars along L</option><option value="B">Bars along B</option></select></div>
+  <div class="field"><label>Clear cover</label><input id="cov" type="number" step="any"><span class="u">mm</span></div>
+  <div class="field"><label>Max aggregate size</label><input id="agg" type="number" step="any"><span class="u">mm</span></div>
+
+  <h3>Top reinforcement (if hogging)</h3>
+  <div class="field"><label>Top bars along L</label><input id="ntL" type="number" step="1" min="0"><span class="u">nos</span></div>
+  <div class="field"><label>Top bars along B</label><input id="ntB" type="number" step="1" min="0"><span class="u">nos</span></div>
+  <div class="field"><label>Top bar diameter</label><input id="dbt" type="number" step="any"><span class="u">mm</span></div>
+  <div class="field"><label>Top cover</label><input id="covT" type="number" step="any"><span class="u">mm</span></div>
+  <div class="hint" id="hint_top" hidden></div>
+
+  <button type="submit" class="calc-btn" id="calcBtn">Calculate</button>
+</form>
+
+  <h3>Export</h3>
+  <div class="btns" style="margin-top:4px">
+    <button id="pdf" disabled>Export PDF</button>
+    <button id="xls" disabled>Export Excel</button>
+    <button class="ghost" id="copy" disabled>Copy report text</button>
+  </div>
+  <div id="toast"></div>
+  <p class="note">Assumptions: rectangular footing, column anywhere on it, rigid footing with a linear soil pressure that may lose contact, no strap or tie beam, normal-weight concrete, uncoated bars, no shear reinforcement, compression in the column, nonseismic design.</p>
+</aside>
+
+<main>
+  <section class="panel empty" id="empty"><b>No results yet</b>Enter the input parameters and click Calculate.</section>
+  <div id="results" hidden>
+    <div class="stale" id="stale" hidden>Inputs have changed since the last calculation. Click Calculate to update the results.</div>
+    <div id="verdict" class="verdict"></div>
+
+    <section class="panel">
+      <h2>Check summary</h2>
+      <div class="tscroll"><table id="checks"></table></div>
+    </section>
+
+    <section class="panel">
+      <h2>Input summary</h2>
+      <table id="inputs"></table>
+    </section>
+
+    <section class="panel">
+      <h2>Soil pressure and critical sections</h2>
+      <div class="figs" id="figs"></div>
+      <p class="note" style="text-align:center">Corner pressures in kPa. Hatched: base lifted off. Dashed lines: one-way shear sections at d from each column face. Dotted: punching perimeter at d/2.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Design procedure</h2>
+      <div id="steps"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Outcome and summary</h2>
+      <div id="summary"></div>
+    </section>
+
+    <section class="panel">
+      <h2>Reinforcement detail</h2>
+      <div class="detail" id="detail"></div>
+      <h4>Bar schedule</h4>
+      <div class="tscroll"><table id="schedule"></table></div>
+    </section>
+
+    <section class="panel">
+      <h2>References</h2>
+      <ul class="refs" id="refs"></ul>
+    </section>
+  </div>
+  <p class="footnote">Developed by Aarakshya Kandel</p>
+</main>
+</div>
+
+<script src="lib/jspdf.umd.min.js"></script>
+<script src="lib/jspdf.plugin.autotable.min.js"></script>
+<script src="lib/xlsx.mini.min.js"></script>
+<script src="lib/fonts.js"></script>
+<script>
+const AUTHOR = "Aarakshya Kandel";
+const ED_NAME = {"25":"ACI 318-25","19":"ACI 318-19"};
+const QTYPE_NAME = {net:"Net allowable", gross:"Gross allowable"};
+const SIZE_NAME = {neglect:"Neglected (13.2.6.2)", apply:"Applied"};
+const REFS = [
+  "ACI CODE-318-25, Building Code for Structural Concrete, American Concrete Institute, 2025.",
+  "ACI 318-19, Building Code Requirements for Structural Concrete, American Concrete Institute, 2019 (SI edition ACI 318M-19). Clause numbers in this sheet follow 318-19.",
+  "Materials: 19.2.1.1 minimum f'c = 17 MPa; Table 20.2.2.4(a) maximum f<sub>y</sub> 550 MPa for flexure (nonseismic); 22.5.3.1, 22.6.3.1 and 25.4.1.4 √f'c ≤ 8.3 MPa.",
+  "Cover: Table 20.5.1.3.1, 75 mm for concrete cast against and permanently in contact with earth; 50 mm (40 mm for bars of 16 mm and smaller) for formed surfaces exposed to earth.",
+  "Footings: 13.3.1.1 base area from unfactored loads and permissible soil pressure; 13.2.6.2 size effect may be neglected for isolated footings; 13.2.7.1 critical section for moment at the column face; 13.2.7.2 critical sections for shear; 13.3.1.2 depth above bottom reinforcement at least 150 mm; 13.3.3.3 band reinforcement in rectangular footings, centred on the column.",
+  "Flexure: 22.2 strain compatibility with ε<sub>cu</sub> = 0.003 and the 0.85f'c stress block; Table 22.2.2.4.3 β<sub>1</sub>; Table 21.2.2 φ; 8.3.3.1 ε<sub>t</sub> ≥ 0.004; 8.6.1.1 A<sub>s,min</sub> = 0.0018A<sub>g</sub>; 8.7.2.2 maximum bar spacing; 25.2.1 minimum clear spacing.",
+  "One-way shear: 21.2.1 φ = 0.75; Table 22.5.5.1 V<sub>c</sub> for members without shear reinforcement, row (c); 22.5.5.1.1 upper limit 0.42λ√f'c b<sub>w</sub>d.",
+  "Two-way shear: 22.6.4.1 critical perimeter at d/2 from the column, ending at a free edge; Table 22.6.5.2 v<sub>c</sub> with α<sub>s</sub> = 40, 30 or 20 for interior, edge and corner sections; 22.6.5.1 size effect factor; 8.4.4.2.2 γ<sub>v</sub>; R8.4.4.2.3 moment taken about the centroid of the critical section.",
+  "Bearing and dowels: 22.8.3.2 bearing strength with A<sub>2</sub> concentric with the column on a 1 vertical to 2 horizontal slope; Table 21.2.1 φ = 0.65; 16.3.4.1 dowel area at least 0.005A<sub>g</sub> of the column; 25.4.9.2 development length in compression.",
+  "Development of footing bars: 25.4.2.3 straight bars in tension, measured from the column face; 25.4.10.1 reduction for excess reinforcement.",
+  "Soil pressure with partial contact is found by solving for the plane of pressure that balances the load and both moments over the part of the base in compression. Soil bearing, contact, overturning and sliding are geotechnical checks outside ACI 318; a factor of safety of 1.5 is used for overturning and sliding, as is common practice.",
+  "318-25 is taken to keep the 318-19 provisions used here. It revised one-way shear and added a lower bound on V<sub>c</sub> that is not used, which is conservative, and it changed hooked and headed bar development, which is not used."
+];
+const SCOPE_NOTE = "Not covered: strap or tie beams (no moment is taken off the footing by a beam), pile caps, combined footings, uplift or tension in the column, settlement, hooked bar anchorage, and seismic design. Under partial contact the punching and shear checks use the solved contact pressure.";
+
+const f = (x,p=2) => (x===null||x===undefined||!isFinite(x)) ? "–" : Number(x).toLocaleString("en-US",{minimumFractionDigits:p,maximumFractionDigits:p});
+const f5 = x => isFinite(x) ? x.toFixed(5) : "–";
+const sg = (x,p=1) => (x>=0?"+":"−")+f(Math.abs(x),p);
+const strip = s => String(s).replace(/<sub>(.*?)<\/sub>/g,"$1").replace(/<sup>(.*?)<\/sup>/g,"^$1").replace(/<[^>]+>/g,"").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&");
+
+// ---------- base grid and contact pressure ----------
+const NG = 160;
+function mkGrid(L,B){
+  const dx=L/NG, dy=B/NG, xs=[], ys=[];
+  for(let i=0;i<NG;i++){ xs.push(-L/2+dx*(i+0.5)); ys.push(-B/2+dy*(i+0.5)); }
+  return {L,B,dx,dy,dA:dx*dy,xs,ys};
+}
+// pressure q = max(0, a + b x + c y) balancing P at (ex, ey)
+function solveContact(G,P,ex,ey){
+  const {L,B,xs,ys,dA}=G, A=L*B;
+  if(!(P>0) || Math.abs(ex)>=L/2 || Math.abs(ey)>=B/2) return {ok:false};
+  let a=P/A, b=12*P*ex/(B*L*L*L)*L*B/A*A/(L*B), c=12*P*ey/(L*B*B*B);
+  b=P*ex/(B*L*L*L/12); c=P*ey/(L*B*B*B/12);
+  let conv=false;
+  for(let it=0; it<200; it++){
+    let F0=0,F1=0,F2=0,J00=0,J01=0,J02=0,J11=0,J12=0,J22=0;
+    for(let i=0;i<NG;i++){ const x=xs[i];
+      for(let j=0;j<NG;j++){ const y=ys[j], q=a+b*x+c*y; if(q<=0) continue;
+        F0+=q; F1+=q*x; F2+=q*y; J00+=1; J01+=x; J02+=y; J11+=x*x; J12+=x*y; J22+=y*y; } }
+    F0=F0*dA-P; F1=F1*dA-P*ex; F2=F2*dA-P*ey;
+    J00*=dA; J01*=dA; J02*=dA; J11*=dA; J12*=dA; J22*=dA;
+    if(Math.abs(F0)<1e-7*P && Math.abs(F1)<1e-7*P*L && Math.abs(F2)<1e-7*P*B){ conv=true; break; }
+    const det=J00*(J11*J22-J12*J12)-J01*(J01*J22-J12*J02)+J02*(J01*J12-J11*J02);
+    if(!(Math.abs(det)>0)) break;
+    const da=( F0*(J11*J22-J12*J12)-J01*(F1*J22-J12*F2)+J02*(F1*J12-J11*F2))/det;
+    const db=(J00*(F1*J22-F2*J12)-F0*(J01*J22-J12*J02)+J02*(J01*F2-F1*J02))/det;
+    const dc=(J00*(J11*F2-J12*F1)-J01*(J01*F2-F1*J02)+F0*(J01*J12-J11*J02))/det;
+    const damp = it<5 ? 0.7 : 1.0;
+    a-=damp*da; b-=damp*db; c-=damp*dc;
+  }
+  let nAct=0, qmax=0;
+  for(let i=0;i<NG;i++) for(let j=0;j<NG;j++){ const q=a+b*xs[i]+c*ys[j]; if(q>0){ nAct++; if(q>qmax) qmax=q; } }
+  const q = (x,y) => Math.max(0, a+b*x+c*y);
+  const cn=[q(-L/2,B/2),q(L/2,B/2),q(L/2,-B/2),q(-L/2,-B/2)];
+  return {ok:conv, a,b,c, q, frac:nAct/(NG*NG), qmax:Math.max(...cn,qmax), qmin:Math.min(...cn), corners:cn, full: Math.min(...[a+b*L/2+c*B/2,a-b*L/2+c*B/2,a+b*L/2-c*B/2,a-b*L/2-c*B/2])>=0};
+}
+// strip sums of the net pressure (q - w) along x and along y
+function strips(G,S,w){
+  const sx=new Float64Array(NG), sy=new Float64Array(NG);
+  for(let i=0;i<NG;i++) for(let j=0;j<NG;j++){ const v=(S.q(G.xs[i],G.ys[j])-w)*G.dA; sx[i]+=v; sy[j]+=v; }
+  return {sx,sy};
+}
+// moment and shear beyond a section at coordinate s, toward +1 or -1, from strip sums at centres cs with width h
+function beyond(st, cs, hw, s, dir){
+  let M=0, V=0;
+  for(let i=0;i<NG;i++){
+    const lo=cs[i]-hw/2, hi=cs[i]+hw/2;
+    let fr, arm;
+    if(dir>0){ if(hi<=s) continue; const l0=Math.max(lo,s); fr=(hi-l0)/hw; arm=(l0+hi)/2-s; }
+    else { if(lo>=s) continue; const h0=Math.min(hi,s); fr=(h0-lo)/hw; arm=s-(lo+h0)/2; }
+    V+=st[i]*fr; M+=st[i]*fr*arm;
+  }
+  return {M,V};
+}
+
+function design(v){
+  const {PD,PL,Msx,Msy,Hx,Hy,Pu,Mux,Muy,Vux,Vuy,qa,qtype,Df,gs,gc,mu,minContact,L,B,h,c1,c2,ox,oy,fcc,fc,fy,Es,ecu,nL,dbL,nB,dbB,bottom,cov,agg,nd,dbd,sizeEff,ntL,ntB,dbt,covT} = v;
+  const ed=v.ed, edName=ED_NAME[ed], lam=1.0;
+  const steps=[], checks=[]; let part="";
+  const P = name => { part=name; };
+  const Sx = (title, ref, lines, note) => steps.push({part,title,ref,lines:lines.filter(Boolean),note});
+  const C = (group,name,ref,demand,capacity,ok,info) => checks.push({group,name,ref,demand,capacity,ok,info});
+  const sqfc=Math.min(Math.sqrt(fc),8.3);
+  const hm=h/1000, Lmm=L*1000, Bmm=B*1000, A=L*B, Acol=c1*c2/1e6, xc=ox/1000, yc=oy/1000;
+  const G=mkGrid(L,B);
+
+  // ===== A =====
+  P("A. Materials, geometry and depth");
+  const beta1 = fc<=28 ? 0.85 : (fc>=55 ? 0.65 : 0.85-0.05*(fc-28)/7);
+  const ety=fy/Es, etc=ety+0.003;
+  const gxm=(Lmm/2+ox-c1/2), gxp=(Lmm/2-ox-c1/2), gym=(Bmm/2+oy-c2/2), gyp=(Bmm/2-oy-c2/2);
+  Sx("Material limits and column position","19.2.1.1, Table 20.2.2.4(a), Table 22.2.2.4.3",
+    [`Footing f'c = ${f(fc,1)} MPa, column f'c = ${f(fcc,1)} MPa (minimum 17 MPa); f<sub>y</sub> = ${f(fy,0)} MPa (maximum 550 MPa)`,
+     `ε<sub>ty</sub> = ${f5(ety)}; β<sub>1</sub> = <span class="r">${f(beta1,3)}</span>; √f'c used = <span class="r">${f(sqfc,2)} MPa</span>`,
+     `Column centre at x = ${sg(ox,0)} mm, y = ${sg(oy,0)} mm from the footing centre`,
+     `Footing beyond the column faces: <span class="r">${f(gxm,0)} mm</span> on the −x side, <span class="r">${f(gxp,0)} mm</span> on the +x side, <span class="r">${f(gym,0)} mm</span> on the −y side, <span class="r">${f(gyp,0)} mm</span> on the +y side`]);
+  C("Materials and depth","Footing concrete f'c ≥ 17 MPa","19.2.1.1","≥ 17 MPa",`${f(fc,1)} MPa`, fc>=17);
+  C("Materials and depth","Column concrete f'c ≥ 17 MPa","19.2.1.1","≥ 17 MPa",`${f(fcc,1)} MPa`, fcc>=17);
+  C("Materials and depth","Bar f<sub>y</sub> ≤ 550 MPa","Table 20.2.2.4(a)","≤ 550 MPa",`${f(fy,0)} MPa`, fy<=550);
+  const dbBot = bottom==="L" ? dbL : dbB;
+  const dL = bottom==="L" ? h-cov-dbL/2 : h-cov-dbB-dbL/2;
+  const dB = bottom==="L" ? h-cov-dbL-dbB/2 : h-cov-dbB/2;
+  const davg=(dL+dB)/2, above=h-cov-dbBot, dTop=h-covT-dbt;
+  const covTreq = dbt<=16 ? 40 : 50;
+  Sx("Cover and effective depths","Table 20.5.1.3.1, 13.3.1.2",
+    [`Bottom bars, cast against earth: cover required 75 mm, provided ${f(cov,0)} mm`,
+     `Bars along L: d<sub>L</sub> = <span class="r">${f(dL,1)} mm</span>; bars along B: d<sub>B</sub> = <span class="r">${f(dB,1)} mm</span> (bars along ${bottom} in the bottom layer)`,
+     `Average for two-way shear: d = <span class="r">${f(davg,1)} mm</span>`,
+     `Depth above bottom reinforcement = h − cover − d<sub>b,bottom</sub> = ${f(above,0)} mm (minimum 150 mm)`,
+     (ntL>0||ntB>0) ? `Top bars: cover ${f(covT,0)} mm (required ${covTreq} mm), d<sub>top</sub> ≈ h − cover − d<sub>b</sub> = ${f(dTop,1)} mm` : ``]);
+  C("Materials and depth","Cover to bottom bars","Table 20.5.1.3.1","≥ 75 mm",`${f(cov,0)} mm`, cov>=75);
+  if(ntL>0||ntB>0) C("Materials and depth","Cover to top bars","Table 20.5.1.3.1",`≥ ${covTreq} mm`,`${f(covT,0)} mm`, covT>=covTreq);
+  C("Materials and depth","Depth above bottom reinforcement","13.3.1.2","≥ 150 mm",`${f(above,0)} mm`, above>=150);
+
+  // ===== B =====
+  P("B. Soil bearing and stability (service loads)");
+  const Wf=gc*A*hm, Ws=gs*Math.max(Df-hm,0)*(A-Acol), Ps=PD+PL, Ptot=Ps+Wf+Ws;
+  const Myt=Ps*xc+Msy+Hx*hm, Mxt=Ps*yc+Msx+Hy*hm, ex=Myt/Ptot, ey=Mxt/Ptot;
+  const SS=solveContact(G,Ptot,ex,ey), over=gs*Df;
+  const kern=6*Math.abs(ex)/L+6*Math.abs(ey)/B;
+  const qmax = SS.ok ? SS.qmax : Infinity, qcmp = qtype==="net" ? qmax-over : qmax;
+  Sx("Loads about the footing centre","13.3.1.1",
+    [`Service column load P<sub>s</sub> = ${f(PD,1)} + ${f(PL,1)} = <span class="r">${f(Ps,1)} kN</span> at x = ${sg(xc*1000,0)}, y = ${sg(yc*1000,0)} mm`,
+     `Footing W<sub>f</sub> = ${f(Wf,1)} kN and soil W<sub>s</sub> = ${f(Ws,1)} kN, both at the footing centre; total P = <span class="r">${f(Ptot,1)} kN</span>`,
+     `M<sub>y</sub> = P<sub>s</sub>x<sub>c</sub> + M<sub>sy</sub> + H<sub>x</sub>h = ${f(Ps,1)} × ${sg(xc,3)} ${Msy<0?"−":"+"} ${f(Math.abs(Msy),1)} ${Hx*hm<0?"−":"+"} ${f(Math.abs(Hx*hm),2)} = <span class="r">${sg(Myt,2)} kN·m</span>`,
+     `M<sub>x</sub> = P<sub>s</sub>y<sub>c</sub> + M<sub>sx</sub> + H<sub>y</sub>h = ${f(Ps,1)} × ${sg(yc,3)} ${Msx<0?"−":"+"} ${f(Math.abs(Msx),1)} ${Hy*hm<0?"−":"+"} ${f(Math.abs(Hy*hm),2)} = <span class="r">${sg(Mxt,2)} kN·m</span>`,
+     `Resultant at e<sub>x</sub> = M<sub>y</sub>/P = <span class="r">${sg(ex*1000,1)} mm</span>, e<sub>y</sub> = M<sub>x</sub>/P = <span class="r">${sg(ey*1000,1)} mm</span>`],
+    "Signs: x runs along L and y along B. A positive moment about y raises the pressure at the +x edge, and a positive moment about x raises it at the +y edge. The column stub weight is ignored.");
+  Sx("Soil pressure under service loads","13.3.1.1",
+    [`Kern ratio 6|e<sub>x</sub>|/L + 6|e<sub>y</sub>|/B = ${f(kern,3)}; ${kern<=1 ? "the resultant is inside the kern, so the whole base is in compression" : "the resultant is outside the kern, so part of the base lifts off"}`,
+     !SS.ok ? `The resultant falls at or beyond the footing edge, so there is no equilibrium. The footing overturns.` :
+       (SS.full ? `q = P/A + M<sub>y</sub>x/I<sub>y</sub> + M<sub>x</sub>y/I<sub>x</sub> = ${f(SS.a,1)} ${SS.b<0?"−":"+"} ${f(Math.abs(SS.b),2)}x ${SS.c<0?"−":"+"} ${f(Math.abs(SS.c),2)}y kPa`
+               : `Contact pressure q = max(0, ${f(SS.a,1)} ${SS.b<0?"−":"+"} ${f(Math.abs(SS.b),2)}x ${SS.c<0?"−":"+"} ${f(Math.abs(SS.c),2)}y) kPa, solved so that the pressure on the part in contact balances P, M<sub>x</sub> and M<sub>y</sub>`),
+     SS.ok ? `Base in contact: <span class="r">${f(SS.frac*100,1)}%</span> (minimum ${f(minContact,0)}%)` : ``,
+     SS.ok ? `Corner pressures (−x+y, +x+y, +x−y, −x−y): ${SS.corners.map(q=>f(q,1)).join(", ")} kPa; q<sub>max</sub> = <span class="r">${f(qmax,1)} kPa</span> (gross)` : ``,
+     SS.ok ? (qtype==="net" ? `Net pressure = q<sub>max</sub> − γ<sub>s</sub>D<sub>f</sub> = ${f(qmax,1)} − ${f(over,1)} = <span class="r">${f(qcmp,1)} kPa</span>; net allowable ${f(qa,1)} kPa; utilisation ${f(qcmp/qa,3)}` : `Gross allowable ${f(qa,1)} kPa; utilisation ${f(qcmp/qa,3)}`) : ``]);
+  C("Soil and stability","Resultant within the footing","Statics",`|e<sub>x</sub>| &lt; L/2, |e<sub>y</sub>| &lt; B/2`,`${sg(ex*1000,0)}, ${sg(ey*1000,0)} mm`, SS.ok);
+  C("Soil and stability","Maximum soil pressure","13.3.1.1",`≤ ${f(qa,1)} kPa (${qtype})`, SS.ok?`${f(qcmp,1)} kPa`:"–", SS.ok && qcmp<=qa);
+  C("Soil and stability","Base in contact","Practice",`≥ ${f(minContact,0)}%`, SS.ok?`${f(SS.frac*100,1)}%`:"–", SS.ok && SS.frac*100>=minContact-0.05);
+  const Pres=PD+Wf+Ws, H=Math.hypot(Hx,Hy), Mov_y=Msy+Hx*hm, Mov_x=Msx+Hy*hm;
+  const fsEdge = (Mo, half, off) => Mo===0 ? Infinity : (Mo>0 ? (PD*(half-off)+(Wf+Ws)*half)/Mo : (PD*(half+off)+(Wf+Ws)*half)/(-Mo));
+  const FSox=fsEdge(Mov_y,L/2,xc), FSoy=fsEdge(Mov_x,B/2,yc), FSs = H>0 ? mu*Pres/H : Infinity;
+  Sx("Overturning and sliding","Geotechnical practice",
+    [`Restoring load (dead only) = P<sub>D</sub> + W<sub>f</sub> + W<sub>s</sub> = <span class="r">${f(Pres,1)} kN</span>; P<sub>D</sub> acts at the column, the weights at the centre`,
+     Mov_y!==0 ? `About the ${Mov_y>0?"+x":"−x"} edge: overturning M<sub>sy</sub> + H<sub>x</sub>h = ${f(Math.abs(Mov_y),2)} kN·m; restoring = ${f(PD,1)} × ${f(L/2-(Mov_y>0?1:-1)*xc,3)} + ${f(Wf+Ws,1)} × ${f(L/2,3)}; FS = <span class="r">${f(FSox,2)}</span>` : `No applied moment along L`,
+     Mov_x!==0 ? `About the ${Mov_x>0?"+y":"−y"} edge: overturning M<sub>sx</sub> + H<sub>y</sub>h = ${f(Math.abs(Mov_x),2)} kN·m; restoring = ${f(PD,1)} × ${f(B/2-(Mov_x>0?1:-1)*yc,3)} + ${f(Wf+Ws,1)} × ${f(B/2,3)}; FS = <span class="r">${f(FSoy,2)}</span>` : `No applied moment along B`,
+     H>0 ? `Sliding: FS = μ × ${f(Pres,1)}/${f(H,1)} = <span class="r">${f(FSs,2)}</span>` : `No horizontal load, so sliding does not govern`],
+    "The offset of the column load is a gravity effect and is not counted as overturning; it shortens the lever arm of P<sub>D</sub> about the near edge. Passive resistance is ignored.");
+  if(Mov_y!==0) C("Soil and stability","Overturning along L","Practice","FS ≥ 1.50",f(FSox,2), FSox>=1.5);
+  if(Mov_x!==0) C("Soil and stability","Overturning along B","Practice","FS ≥ 1.50",f(FSoy,2), FSoy>=1.5);
+  if(H>0) C("Soil and stability","Sliding","Practice","FS ≥ 1.50",f(FSs,2), FSs>=1.5);
+
+  // ===== C =====
+  P("C. Factored soil pressure");
+  const wu=1.2*(gc*hm+gs*Math.max(Df-hm,0)), Wu=wu*A;
+  const PuT=Pu+Wu, Myu=Pu*xc+Muy+Vux*hm, Mxu=Pu*yc+Mux+Vuy*hm;
+  const exu=Myu/PuT, eyu=Mxu/PuT, SU=solveContact(G,PuT,exu,eyu);
+  Sx("Factored pressure including footing weight","13.2.7, 13.3.1",
+    [`Factored weight of footing and soil = 1.2(γ<sub>c</sub>h + γ<sub>s</sub>(D<sub>f</sub> − h)) = 1.2 × (${f(gc,1)} × ${f(hm,3)} + ${f(gs,1)} × ${f(Math.max(Df-hm,0),3)}) = <span class="r">${f(wu,2)} kPa</span>, ${f(Wu,1)} kN in all`,
+     `Total P = P<sub>u</sub> + ${f(Wu,1)} = ${f(PuT,1)} kN; M<sub>y</sub> = P<sub>u</sub>x<sub>c</sub> + M<sub>uy</sub> + V<sub>ux</sub>h = <span class="r">${sg(Myu,2)} kN·m</span>; M<sub>x</sub> = P<sub>u</sub>y<sub>c</sub> + M<sub>ux</sub> + V<sub>uy</sub>h = <span class="r">${sg(Mxu,2)} kN·m</span>`,
+     SU.ok ? `Contact pressure q<sub>u</sub> = max(0, ${f(SU.a,1)} ${SU.b<0?"−":"+"} ${f(Math.abs(SU.b),2)}x ${SU.c<0?"−":"+"} ${f(Math.abs(SU.c),2)}y) kPa; base in contact ${f(SU.frac*100,1)}%` : `The factored resultant falls outside the footing: no equilibrium.`,
+     SU.ok ? `Corners: ${SU.corners.map(q=>f(q,1)).join(", ")} kPa` : ``,
+     `Design pressure on the footing = q<sub>u</sub> − ${f(wu,2)} kPa. Where it is negative, the weight of the footing and soil is not carried by the soil below and bends the footing the other way (top tension).`],
+    "The 1.2 factor on the self weight is the dead load factor of the combination that gives P<sub>u</sub>. Under full contact the self weight cancels and the design pressure equals the pressure from the column alone.");
+  C("Soil and stability","Factored resultant within the footing","Statics","Inside the footing", SU.ok?`${sg(exu*1000,0)}, ${sg(eyu*1000,0)} mm`:"Outside", SU.ok);
+  if(!SU.ok){
+    return failEarly();
+  }
+  const ST=strips(G,SU,wu);
+
+  // ===== D =====
+  P("D. Flexure");
+  const Llong=Math.max(L,B), Sshort=Math.min(L,B), betaF=Llong/Sshort, gammaS=2/(betaF+1);
+  const shortBars = L>B+1e-9 ? "B" : (B>L+1e-9 ? "L" : null);
+  const smax=Math.min(2*h,450), sClrMin=Math.max(25,dbL,dbB,4/3*agg);
+  function sideActions(isL, d){
+    const half=(isL?L:B)/2, cpos=isL?xc:yc, cdim=(isL?c1:c2)/1000, st=isL?ST.sx:ST.sy, cs=isL?G.xs:G.ys, hw=isL?G.dx:G.dy;
+    const out=[];
+    [-1,1].forEach(s=>{
+      const face=cpos+s*cdim/2, len=s>0?half-face:face+half;
+      let Msag=0, Mhog=0, Mface=0, Vd=0;
+      if(len>1e-6){
+        for(let k=0;k<=20;k++){ const sec=face+s*len*k/20, r=beyond(st,cs,hw,sec,s); if(k===0) Mface=r.M; if(r.M>Msag) Msag=r.M; if(-r.M>Mhog) Mhog=-r.M; }
+        const sd=face+s*d/1000; if((s>0 && sd<half)||(s<0 && sd>-half)) Vd=beyond(st,cs,hw,sd,s).V;
+      }
+      out.push({s,face,len,Msag,Mhog,Mface,Vd});
+    });
+    return out;
+  }
+  function flex(dir){
+    const isL = dir==="L", n=isL?nL:nB, db=isL?dbL:dbB, d=isL?dL:dB, wM=isL?B:L, b=wM*1000;
+    const sides=sideActions(isL,d), Mu=Math.max(sides[0].Msag,sides[1].Msag,0), gov=sides[0].Msag>=sides[1].Msag?sides[0]:sides[1];
+    const Rn=Mu*1e6/(0.9*b*d*d), disc=1-2*Rn/(0.85*fc);
+    const rho = disc>=0 ? 0.85*fc/fy*(1-Math.sqrt(disc)) : NaN, AsReq=rho*b*d;
+    const AsMin=0.0018*b*h, AsDes=Math.max(AsReq,AsMin), Ab=Math.PI*db*db/4, As=n*Ab;
+    const aa=As*fy/(0.85*fc*b), c=aa/beta1, et=ecu*(d-c)/c;
+    const phi = et>=etc ? 0.9 : (et<=ety ? 0.65 : 0.65+0.25*(et-ety)/(etc-ety));
+    const Mn=As*fy*(d-aa/2)/1e6, phiMn=phi*Mn;
+    // layout, with any band centred on the column and kept inside the footing
+    let banded = shortBars===dir; const inner=b-2*cov-db;
+    const uni=[]; for(let i=0;i<n;i++) uni.push(cov+db/2+(n>1?i*inner/(n-1):inner/2));
+    const sUni=n>1?inner/(n-1):Infinity;
+    let pos=[], sMaxP=sUni, sMinP=sUni, nBand=n, sBand=NaN, sOut=NaN, nOut=0, bandW=0, b0=0, uniformOK=true, inBandUni=n;
+    if(banded){
+      bandW=Sshort*1000; const cpos=(isL?yc:xc)*1000+b/2; b0=Math.min(Math.max(cpos-bandW/2,0),b-bandW);
+      nBand=Math.min(n,Math.ceil(gammaS*n-1e-9));
+      inBandUni=uni.filter(p=>p>=b0-1e-6 && p<=b0+bandW+1e-6).length; uniformOK=inBandUni>=nBand;
+    }
+    if(!banded||uniformOK){ pos=uni; }
+    else {
+      nOut=n-nBand; sBand=bandW/nBand;
+      for(let i=0;i<nBand;i++) pos.push(b0+sBand*(i+0.5));
+      const sL=Math.max(b0-cov-db/2,0), sR=Math.max(b-(b0+bandW)-cov-db/2,0), tot=sL+sR;
+      let nl = tot>0 ? Math.round(nOut*sL/tot) : 0; let nr=nOut-nl;
+      if(nl>0) for(let i=1;i<=nl;i++) pos.push(b0-(i-0.5)*sL/nl);
+      if(nr>0) for(let i=1;i<=nr;i++) pos.push(b0+bandW+(i-0.5)*sR/nr);
+      const sps=[sBand]; if(nl) sps.push(sL/nl); if(nr) sps.push(sR/nr);
+      sOut = nOut ? Math.max(nl?sL/nl:0, nr?sR/nr:0) : NaN;
+      sMaxP=Math.max(...sps); sMinP=Math.min(...sps);
+      pos.sort((x,y)=>x-y);
+    }
+    banded = banded && !uniformOK;
+    const clr=sMinP-db, condMet = clr>=2*db && cov>=db;
+    const den = db<22 ? (condMet?2.1:1.4) : (condMet?1.7:1.1);
+    const psiG = fy<=420?1.0:(fy<=550?1.15:1.3);
+    const ld=Math.max(fy*psiG/(den*lam*sqfc)*db,300);
+    const dev = sides.map(sd=>{ const avail=sd.len*1000-cov; if(sd.Msag<=0.01*Math.max(Mu,1)) return {avail, need:0, skip:true, sd};
+      const r=sd.Msag/phiMn, need=Math.max(ld*Math.min(1,r),300); return {avail, need, ratio:r, skip:false, sd}; });
+    // top bars
+    const Mhog=Math.max(sides[0].Mhog,sides[1].Mhog), nt=isL?ntL:ntB, Abt=Math.PI*dbt*dbt/4, Ast=nt*Abt;
+    let top=null;
+    if(Mhog>0.5){
+      const Rt=Mhog*1e6/(0.9*b*dTop*dTop), dt2=1-2*Rt/(0.85*fc);
+      const AsT = dt2>=0 ? 0.85*fc/fy*(1-Math.sqrt(dt2))*b*dTop : NaN;
+      const aT=Ast*fy/(0.85*fc*b), phiMnT = Ast>0 ? 0.9*Ast*fy*(dTop-aT/2)/1e6 : 0;
+      top={Mhog,AsT,Ast,nt,phiMnT,ok: Ast>0 && phiMnT>=Mhog};
+    }
+    return {dir,isL,n,db,d,wM,b,sides,gov,Mu,Rn,disc,rho,AsReq,AsMin,AsDes,Ab,As,aa,c,et,phi,Mn,phiMn,banded,pos,sMaxP,sMinP,nBand,sBand,sOut,nOut,bandW,b0,uniformOK,inBandUni,shortDir:shortBars===dir,clr,condMet,den,psiG,ld,dev,top,Mhog};
+  }
+  const FL=flex("L"), FB=flex("B");
+  [FL,FB].forEach(F=>{
+    const ax=F.isL?"x":"y", other=F.isL?"B":"L";
+    Sx(`Bending moments, bars along ${F.dir}`,"13.2.7.1",
+      F.sides.map(sd=>`${sd.s>0?"+":"−"}${ax} side: face at ${ax} = ${sg(sd.face,3)} m, cantilever ${f(sd.len,3)} m; M<sub>u</sub> at the face = <span class="r">${f(sd.Mface,1)} kN·m</span>${sd.Mhog>0.5?`; largest hogging along it ${f(sd.Mhog,1)} kN·m`:""}`)
+      .concat([`Design sagging moment over the full width ${other} = ${f(F.wM,2)} m: M<sub>u</sub> = <span class="r">${f(F.Mu,1)} kN·m</span> (${F.gov.s>0?"+":"−"}${ax} side)`]),
+      "Moments come from integrating the design pressure (contact pressure less factored self weight) beyond each section, on a 160 × 160 grid over the base.");
+    Sx(`Bottom reinforcement, bars along ${F.dir}`,"22.2, 8.6.1.1, Table 21.2.2, 8.3.3.1",
+      [`R<sub>n</sub> = M<sub>u</sub>/(φbd²) = ${f(F.Mu*1e6,0)}/(0.90 × ${f(F.b,0)} × ${f(F.d,1)}²) = ${f(F.Rn,3)} MPa`,
+       F.disc>=0 ? `ρ = <span class="r">${f(F.rho,5)}</span>; A<sub>s,req</sub> = ρbd = <span class="r">${f(F.AsReq,0)} mm²</span>` : `1 − 2R<sub>n</sub>/(0.85f'c) &lt; 0: the footing is too shallow for this moment.`,
+       `A<sub>s,min</sub> = 0.0018bh = <span class="r">${f(F.AsMin,0)} mm²</span>; provided ${F.n}-Ø${f(F.db,0)} = <span class="r">${f(F.As,0)} mm²</span>`,
+       `a = ${f(F.aa,2)} mm; c = ${f(F.c,2)} mm; ε<sub>t</sub> = <span class="r">${f5(F.et)}</span>; φ = ${f(F.phi,3)}`,
+       `φM<sub>n</sub> = ${f(F.phi,3)} × ${f(F.As,0)} × ${f(fy,0)} × (${f(F.d,1)} − ${f(F.aa,2)}/2)/10⁶ = <span class="r">${f(F.phiMn,1)} kN·m</span>; utilisation ${f(F.Mu/F.phiMn,3)}`]);
+    C("Flexure",`Footing depth adequate for moment, bars along ${F.dir}`,"22.2",`R<sub>n</sub> = ${f(F.Rn,2)} MPa`,`≤ ${f(0.425*fc,2)} MPa`, F.disc>=0);
+    C("Flexure",`Steel area, bars along ${F.dir}`,"22.2, 8.6.1.1",`≥ ${f(F.AsDes,0)} mm²`,`${f(F.As,0)} mm²`, F.As>=F.AsDes);
+    C("Flexure",`Strain limit, bars along ${F.dir}`,"8.3.3.1",`ε<sub>t</sub> ≥ 0.00400`,f5(F.et), F.et>=0.004);
+    C("Flexure",`Flexural strength, bars along ${F.dir}`,"13.2.7.1",`M<sub>u</sub> = ${f(F.Mu,1)} kN·m`,`φM<sub>n</sub> = ${f(F.phiMn,1)} kN·m`, F.phiMn>=F.Mu);
+    if(F.top){
+      const T=F.top;
+      Sx(`Top reinforcement, bars along ${F.dir}`,"22.2, 13.2.7.1",
+        [`Hogging moment where the soil does not carry the self weight: M<sub>u</sub> = <span class="r">${f(T.Mhog,1)} kN·m</span> over ${f(F.wM,2)} m`,
+         isFinite(T.AsT) ? `A<sub>s,req</sub> at d<sub>top</sub> = ${f(dTop,1)} mm: <span class="r">${f(T.AsT,0)} mm²</span>` : `The footing is too shallow for this hogging moment.`,
+         T.nt>0 ? `Provided ${T.nt}-Ø${f(dbt,0)} = ${f(T.Ast,0)} mm²; φM<sub>n</sub> = <span class="r">${f(T.phiMnT,1)} kN·m</span>` : `No top bars are provided along ${F.dir}.`],
+        "Top bars should run the full length and be developed past the column face.");
+      C("Flexure",`Top bars for hogging, along ${F.dir}`,"22.2",`M<sub>u</sub> = ${f(T.Mhog,1)} kN·m`, T.nt>0?`φM<sub>n</sub> = ${f(T.phiMnT,1)} kN·m`:"No top bars", T.ok);
+    }
+  });
+  if(shortBars){
+    const F = shortBars==="L" ? FL : FB;
+    Sx("Band reinforcement in the short direction","13.3.3.3",
+      [`β = ${f(Llong,2)}/${f(Sshort,2)} = ${f(betaF,3)}; γ<sub>s</sub> = 2/(β + 1) = <span class="r">${f(gammaS,3)}</span>`,
+       `At least γ<sub>s</sub> × ${F.n} = ${f(gammaS*F.n,2)}, so <span class="r">${F.nBand} bars</span> along ${shortBars} must lie in a band ${f(Sshort,2)} m wide, centred on the column where the footing allows: band from ${f(F.b0,0)} to ${f(F.b0+F.bandW,0)} mm across ${shortBars==="B"?"L":"B"}`,
+       F.uniformOK ? `Even spacing already puts ${F.inBandUni} bars in the band, so the bars stay evenly spaced`
+         : `Even spacing would put only ${F.inBandUni} bars in the band, so ${F.nBand} go in the band at ${f(F.sBand,0)} mm` + (F.nOut ? ` and ${F.nOut} outside at up to ${f(F.sOut,0)} mm` : "")]);
+  }
+
+  // ===== E =====
+  P("E. One-way shear");
+  const lamS1 = d => sizeEff==="neglect" ? 1 : Math.min(Math.sqrt(2/(1+0.004*d)),1);
+  function oneway(F){
+    const sd=F.sides[0].Vd>=F.sides[1].Vd ? F.sides[0] : F.sides[1], Vu=Math.max(Math.abs(F.sides[0].Vd),Math.abs(F.sides[1].Vd));
+    const rhoW=F.As/(F.b*F.d), ls=lamS1(F.d);
+    const Vc1=0.66*ls*lam*Math.cbrt(rhoW)*sqfc*F.b*F.d/1e3, Vcmax=0.42*lam*sqfc*F.b*F.d/1e3, Vc=Math.min(Vc1,Vcmax);
+    return {Vu,sd,rhoW,ls,Vc1,Vcmax,Vc,phiVc:0.75*Vc};
+  }
+  const SL=oneway(FL), SB=oneway(FB);
+  [[FL,SL],[FB,SB]].forEach(([F,S])=>{
+    const ax=F.isL?"x":"y";
+    Sx(`One-way shear, spanning along ${F.dir}`,"13.2.7.2, Table 22.5.5.1",
+      [...F.sides.map(sd=>`${sd.s>0?"+":"−"}${ax} side: section at d = ${f(F.d,0)} mm from the face, V<sub>u</sub> = ${sd.len*1000>F.d ? f(sd.Vd,1)+" kN" : "0 (section outside the footing)"}`),
+       `Design V<sub>u</sub> = <span class="r">${f(S.Vu,1)} kN</span>`,
+       `ρ<sub>w</sub> = ${f(S.rhoW,5)}; λ<sub>s</sub> = ${sizeEff==="neglect" ? "1.0 (13.2.6.2)" : f(S.ls,3)}; V<sub>c</sub> = 0.66λ<sub>s</sub>λ(ρ<sub>w</sub>)<sup>1/3</sup>√f'c bd = ${f(S.Vc1,1)} kN${S.Vc1>S.Vcmax?`, limited to ${f(S.Vcmax,1)} kN`:""}`,
+       `φV<sub>c</sub> = <span class="r">${f(S.phiVc,1)} kN</span>; utilisation ${f(S.Vu/S.phiVc,3)}`],
+      ed==="25" ? "318-25 adds a lower bound to V<sub>c</sub>. It is not applied here, which is conservative." : "");
+    C("One-way shear",`One-way shear, spanning along ${F.dir}`,"13.2.7.2, 22.5",`V<sub>u</sub> = ${f(S.Vu,1)} kN`,`φV<sub>c</sub> = ${f(S.phiVc,1)} kN`, S.phiVc>=S.Vu);
+  });
+
+  // ===== F =====
+  P("F. Two-way (punching) shear");
+  function punch(dd, SUx, wux){
+    const hx=(c1+dd)/2000, hy=(c2+dd)/2000;
+    const x0=Math.max(xc-hx,-L/2), x1=Math.min(xc+hx,L/2), y0=Math.max(yc-hy,-B/2), y1=Math.min(yc+hy,B/2);
+    const segs=[]; // {x0,y0,x1,y1}
+    const inL=xc-hx>-L/2+1e-9, inR=xc+hx<L/2-1e-9, inBt=yc-hy>-B/2+1e-9, inT=yc+hy<B/2-1e-9;
+    if(inL) segs.push({x0:x0,y0:y0,x1:x0,y1:y1}); if(inR) segs.push({x0:x1,y0:y0,x1:x1,y1:y1});
+    if(inBt) segs.push({x0:x0,y0:y0,x1:x1,y1:y0}); if(inT) segs.push({x0:x0,y0:y1,x1:x1,y1:y1});
+    const ns=segs.length, d=dd/1000;
+    let bo=0, sx=0, sy=0; segs.forEach(s=>{ const l=Math.hypot(s.x1-s.x0,s.y1-s.y0); bo+=l; sx+=l*(s.x0+s.x1)/2; sy+=l*(s.y0+s.y1)/2; });
+    const xb=sx/bo, yb=sy/bo;
+    let Jy=0, Jx=0, cxm=0, cym=0;
+    segs.forEach(s=>{ const l=Math.hypot(s.x1-s.x0,s.y1-s.y0), mx=(s.x0+s.x1)/2, my=(s.y0+s.y1)/2;
+      if(s.x0===s.x1){ Jy+=l*d*(mx-xb)**2; Jx+=d*l**3/12+l*d*(my-yb)**2+l*d**3/12; }
+      else { Jx+=l*d*(my-yb)**2; Jy+=d*l**3/12+l*d*(mx-xb)**2+l*d**3/12; }
+      cxm=Math.max(cxm,Math.abs(s.x0-xb),Math.abs(s.x1-xb)); cym=Math.max(cym,Math.abs(s.y0-yb),Math.abs(s.y1-yb)); });
+    // net pressure inside the critical area
+    let R=0; for(let i=0;i<NG;i++){ const xa=G.xs[i]-G.dx/2, xbb=G.xs[i]+G.dx/2, fx=Math.max(0,Math.min(xbb,x1)-Math.max(xa,x0))/G.dx; if(!fx) continue;
+      for(let j=0;j<NG;j++){ const ya=G.ys[j]-G.dy/2, ybb=G.ys[j]+G.dy/2, fy_=Math.max(0,Math.min(ybb,y1)-Math.max(ya,y0))/G.dy; if(!fy_) continue;
+        R+=(SUx.q(G.xs[i],G.ys[j])-wux)*G.dA*fx*fy_; } }
+    const Vu=Math.max(Pu-R,0), bx=x1-x0, by=y1-y0;
+    const gvy=1-1/(1+2/3*Math.sqrt(bx/by)), gvx=1-1/(1+2/3*Math.sqrt(by/bx));
+    const Msy_=Math.abs(Muy)+Math.abs(Vu*(xc-xb)), Msx_=Math.abs(Mux)+Math.abs(Vu*(yc-yb));
+    const bo_mm=bo*1000, vV=Vu*1e3/(bo_mm*dd);
+    const vMy = ns>=2 ? gvy*Msy_*1e6*(cxm*1000)/(Jy*1e12) : 0, vMx = ns>=2 ? gvx*Msx_*1e6*(cym*1000)/(Jx*1e12) : 0;
+    const vu=vV+vMx+vMy, als = ns===4?40:(ns===3?30:20);
+    const betaC=Math.max(c1,c2)/Math.min(c1,c2), ls=lamS1(dd);
+    const va=0.33*ls*lam*sqfc, vb=0.17*(1+2/betaC)*ls*lam*sqfc, vcc=0.083*(2+als*dd/bo_mm)*ls*lam*sqfc;
+    const vc=Math.min(va,vb,vcc);
+    return {x0,x1,y0,y1,segs,ns,bo:bo_mm,xb,yb,Jx,Jy,cxm,cym,R,Vu,bx,by,gvx,gvy,Msx:Msx_,Msy:Msy_,vV,vMx,vMy,vu,als,betaC,ls,va,vb,vcc,vc,phivc:0.75*vc};
+  }
+  const PS=punch(davg,SU,wu);
+  const kind = PS.ns===4?"interior (four sides)":(PS.ns===3?"edge (three sides)":(PS.ns===2?"corner (two sides)":"no closed section"));
+  Sx("Punching shear at d/2 from the column","22.6.4.1, Table 22.6.5.2, 8.4.4.2",
+    [`Critical section ${kind}: x from ${sg(PS.x0*1000,0)} to ${sg(PS.x1*1000,0)} mm, y from ${sg(PS.y0*1000,0)} to ${sg(PS.y1*1000,0)} mm; b<sub>o</sub> = <span class="r">${f(PS.bo,0)} mm</span>, d = ${f(davg,1)} mm`,
+     `Centroid of the section at x = ${sg(PS.xb*1000,0)}, y = ${sg(PS.yb*1000,0)} mm; J<sub>c</sub> = ${(PS.Jx*1e12/1e9).toFixed(1)} × 10⁹ (about x) and ${(PS.Jy*1e12/1e9).toFixed(1)} × 10⁹ mm⁴ (about y)`,
+     `V<sub>u</sub> = P<sub>u</sub> − net pressure inside the section = ${f(Pu,1)} − ${f(PS.R,1)} = <span class="r">${f(PS.Vu,1)} kN</span>; direct stress ${f(PS.vV,3)} MPa`,
+     `Moment about the section centroid: |M<sub>ux</sub>| + |V<sub>u</sub>(y<sub>c</sub> − ȳ)| = ${f(PS.Msx,1)} kN·m and |M<sub>uy</sub>| + |V<sub>u</sub>(x<sub>c</sub> − x̄)| = ${f(PS.Msy,1)} kN·m`,
+     `γ<sub>v</sub> = ${f(PS.gvx,3)} and ${f(PS.gvy,3)}; stresses ${f(PS.vMx,3)} + ${f(PS.vMy,3)} MPa; v<sub>u</sub> = <span class="r">${f(PS.vu,3)} MPa</span>`,
+     `α<sub>s</sub> = ${PS.als}; v<sub>c</sub> = min[${f(PS.va,3)}, ${f(PS.vb,3)}, ${f(PS.vcc,3)}] = ${f(PS.vc,3)} MPa; φv<sub>c</sub> = <span class="r">${f(PS.phivc,3)} MPa</span>; utilisation ${f(PS.vu/PS.phivc,3)}`],
+    "Where the column is within d/2 of a footing edge, the section runs to the edge and the side on the edge is dropped. The full column moments plus the moment from the shift of the section centroid are taken as transferred by eccentric shear, which is conservative.");
+  C("Two-way shear",`Punching shear at d/2 (${PS.ns===4?"interior":PS.ns===3?"edge":"corner"})`,"22.6.4.1, 22.6.5.2",`v<sub>u</sub> = ${f(PS.vu,3)} MPa`,`φv<sub>c</sub> = ${f(PS.phivc,3)} MPa`, PS.ns>=2 && PS.vu<=PS.phivc);
+
+  // ===== G =====
+  P("G. Column bearing and dowels");
+  const A1=c1*c2, gmin=Math.min(gxm,gxp,gym,gyp), kA=Math.min(1+2*Math.min(gxm,gxp,2*h)/c1, 1+2*Math.min(gym,gyp,2*h)/c2), A2=kA*kA*A1, rt=Math.min(Math.sqrt(A2/A1),2);
+  const phiBcol=0.65*0.85*fcc*A1/1e3, phiBftg=0.65*0.85*fc*A1*rt/1e3;
+  Sx("Bearing at the column base","22.8.3.2, Table 21.2.1",
+    [`A<sub>1</sub> = ${f(c1,0)} × ${f(c2,0)} = ${f(A1,0)} mm²`,
+     `A<sub>2</sub> must be concentric with the column, so the nearest edge limits it: scale = min(1 + 2 min(${f(gxm,0)}, ${f(gxp,0)}, 2h)/c<sub>1</sub>, 1 + 2 min(${f(gym,0)}, ${f(gyp,0)}, 2h)/c<sub>2</sub>) = ${f(kA,3)}, √(A<sub>2</sub>/A<sub>1</sub>) used = <span class="r">${f(rt,3)}</span>`,
+     `Column side: φB<sub>n</sub> = 0.65 × 0.85 × ${f(fcc,1)} × ${f(A1,0)}/10³ = <span class="r">${f(phiBcol,0)} kN</span>; footing side: × ${f(rt,3)} with f'c = ${f(fc,1)} = <span class="r">${f(phiBftg,0)} kN</span>; P<sub>u</sub> = ${f(Pu,0)} kN`]);
+  C("Bearing and dowels","Bearing on the column concrete","22.8.3.2",`P<sub>u</sub> = ${f(Pu,0)} kN`,`φB<sub>n</sub> = ${f(phiBcol,0)} kN`, Pu<=phiBcol);
+  C("Bearing and dowels","Bearing on the footing concrete","22.8.3.2",`P<sub>u</sub> = ${f(Pu,0)} kN`,`φB<sub>n</sub> = ${f(phiBftg,0)} kN`, Pu<=phiBftg);
+  const Asd=nd*Math.PI*dbd*dbd/4, Asdmin=0.005*A1;
+  const ldc=Math.max(0.24*fy/(lam*sqfc)*dbd, 0.043*fy*dbd, 200), availD=h-cov-dbL-dbB;
+  Sx("Dowels into the footing","16.3.4.1, 25.4.9.2",
+    [`A<sub>s,dowel</sub> = ${nd}-Ø${f(dbd,0)} = <span class="r">${f(Asd,0)} mm²</span>; minimum 0.005A<sub>g</sub> = ${f(Asdmin,0)} mm²`,
+     `ℓ<sub>dc</sub> = max(0.24f<sub>y</sub>d<sub>b</sub>/(λ√f'c), 0.043f<sub>y</sub>d<sub>b</sub>, 200) = <span class="r">${f(ldc,0)} mm</span>; straight length available above the bottom mat = ${f(availD,0)} mm`],
+    "Hooks do not count in compression (25.4.9.1). With a large column moment the dowels on one face may go into tension; check them as tension bars if so.");
+  C("Bearing and dowels","Dowel area","16.3.4.1",`≥ ${f(Asdmin,0)} mm²`,`${f(Asd,0)} mm²`, Asd>=Asdmin);
+  C("Bearing and dowels","Dowel development in compression","25.4.9.2",`ℓ<sub>dc</sub> = ${f(ldc,0)} mm`,`${f(availD,0)} mm available`, availD>=ldc);
+
+  // ===== H =====
+  P("H. Detailing");
+  [FL,FB].forEach(F=>{
+    const ax=F.isL?"x":"y";
+    const lines=[F.banded ? `Banded layout: ${F.nBand} bars at ${f(F.sBand,0)} mm in the band` + (F.nOut?`, ${F.nOut} outside at up to ${f(F.sOut,0)} mm`:"") : `Even spacing ${f(F.sMaxP,0)} mm`,
+      `Largest spacing ${f(F.sMaxP,0)} mm (limit ${f(smax,0)} mm); smallest clear spacing ${f(F.clr,0)} mm (minimum ${f(sClrMin,1)} mm)`,
+      `Full development: ℓ<sub>d</sub> = f<sub>y</sub>ψ<sub>g</sub>/(${F.den}λ√f'c) d<sub>b</sub> = ${f(F.ld,0)} mm (${F.condMet?"clear spacing ≥ 2d<sub>b</sub>, cover ≥ d<sub>b</sub>":"other cases"})`];
+    F.dev.forEach(D=>{ const sd=D.sd;
+      lines.push(D.skip ? `${sd.s>0?"+":"−"}${ax} face: no sagging moment beyond it, no development needed` :
+        `${sd.s>0?"+":"−"}${ax} face: M<sub>u</sub>/φM<sub>n</sub> = ${f(D.ratio,3)}, so ℓ<sub>d</sub> may be reduced to ${f(D.need,0)} mm (25.4.10.1); available ${f(D.avail,0)} mm`); });
+    Sx(`Spacing and development, bars along ${F.dir}`,"8.7.2.2, 25.2.1, 25.4.2.3, 25.4.10.1",lines,
+      "Where the bar length past a face is short, end the bars with standard hooks. That is common on the short side of an eccentric footing.");
+    C("Detailing",`Maximum spacing, bars along ${F.dir}`,"8.7.2.2",`≤ ${f(smax,0)} mm`,`${f(F.sMaxP,0)} mm`, F.sMaxP<=smax);
+    C("Detailing",`Minimum clear spacing, bars along ${F.dir}`,"25.2.1",`≥ ${f(sClrMin,1)} mm`,`${f(F.clr,0)} mm`, F.clr>=sClrMin);
+    F.dev.forEach(D=>{ if(D.skip) return; C("Detailing",`Development past the ${D.sd.s>0?"+":"−"}${ax} face, bars along ${F.dir}`,"25.4.2.3, 25.4.10.1",`ℓ<sub>d</sub> = ${f(D.need,0)} mm`,`${f(D.avail,0)} mm available`, D.avail>=D.need); });
+  });
+
+  // ===== hints =====
+  const hints={};
+  const oxU = -(Msy+Hx*hm)/Ps*1000, oyU = -(Msx+Hy*hm)/Ps*1000;
+  hints.offset={cls: (SS.ok && SS.frac*100>=minContact-0.05) ? "ok" : "bad", html:
+    `Service resultant at e<sub>x</sub> = <b>${sg(ex*1000,0)}</b>, e<sub>y</sub> = <b>${sg(ey*1000,0)} mm</b>; base in contact ${SS.ok?f(SS.frac*100,0)+"%":"none"}. ` +
+    `For a uniform pressure under service loads, place the column at about x = <b>${sg(oxU,0)}</b>, y = <b>${sg(oyU,0)} mm</b> from the footing centre` +
+    ((Math.abs(oxU)+c1/2>Lmm/2 || Math.abs(oyU)+c2/2>Bmm/2) ? ", which does not fit in this footing." : ".")};
+  hints.size={cls: (SS.ok && qcmp<=qa) ? "ok" : "bad", html:
+    `Soil pressure ${SS.ok?f(qcmp,0):"–"} kPa against ${f(qa,0)} kPa (${qtype})` + (SS.ok?`, utilisation <b>${f(qcmp/qa,2)}</b>`:"") + `. ` +
+    (kern>1 ? `The resultant is outside the kern, so the pressure rises fast as it moves out. Enlarge the footing toward the resultant or move the column toward the centre.` : `The resultant is inside the kern.`)};
+  let hNeed=null;
+  const shearAt = hh => {
+    const hmm=hh/1000, w2=1.2*(gc*hmm+gs*Math.max(Df-hmm,0)), P2=Pu+w2*A;
+    const S2=solveContact(G,P2,(Pu*xc+Muy+Vux*hmm)/P2,(Pu*yc+Mux+Vuy*hmm)/P2); if(!S2.ok) return false;
+    const T2=strips(G,S2,w2);
+    const dLt = bottom==="L" ? hh-cov-dbL/2 : hh-cov-dbB-dbL/2, dBt = bottom==="L" ? hh-cov-dbL-dbB/2 : hh-cov-dbB/2;
+    const one=(isL,dd)=>{ const half=(isL?L:B)/2, cp=isL?xc:yc, cd=(isL?c1:c2)/1000, st=isL?T2.sx:T2.sy, cs=isL?G.xs:G.ys, hw=isL?G.dx:G.dy, b=(isL?B:L)*1000, n=isL?nL:nB, db=isL?dbL:dbB;
+      let V=0; [-1,1].forEach(s=>{ const sd=cp+s*cd/2+s*dd/1000; if((s>0&&sd<half)||(s<0&&sd>-half)) V=Math.max(V,Math.abs(beyond(st,cs,hw,sd,s).V)); });
+      const rw=n*Math.PI*db*db/4/(b*dd); return 0.75*Math.min(0.66*lamS1(dd)*Math.cbrt(rw)*sqfc*b*dd,0.42*sqfc*b*dd)/1e3>=V; };
+    const pp=punch((dLt+dBt)/2,S2,w2); return one(true,dLt)&&one(false,dBt)&&pp.ns>=2&&pp.vu<=pp.phivc;
+  };
+  for(let hh=250; hh<=2500; hh+=50){ if(shearAt(hh)){ hNeed=hh; break; } }
+  if(hNeed && hNeed>250 && shearAt(hNeed-25)) hNeed-=25;
+  const shearOk = PS.ns>=2 && PS.vu<=PS.phivc && SL.phiVc>=SL.Vu && SB.phiVc>=SB.Vu;
+  hints.depth={cls: shearOk && above>=150 ? "ok" : "bad", html:
+    `Punching (${PS.ns===4?"interior":PS.ns===3?"edge":"corner"} section) utilisation <b>${f(PS.vu/PS.phivc,2)}</b>, one-way shear <b>${f(SL.Vu/SL.phiVc,2)}</b> (along L) and <b>${f(SB.Vu/SB.phiVc,2)}</b> (along B). ` +
+    (hNeed ? `With these bars, shear passes from about <b>h = ${hNeed} mm</b>. ` : `No depth up to 2500 mm passes shear with these bars. `) + `Providing ${f(h,0)} mm.`};
+  const barHint = F => {
+    const nReq = isFinite(F.AsDes) ? Math.ceil(F.AsDes/F.Ab-1e-9) : NaN, nFit=Math.max(2,Math.floor((F.b-2*cov-F.db)/smax)+1);
+    const ok = checks.filter(k=>!k.info && new RegExp(`along ${F.dir}$`).test(strip(k.name)) && /Flexure|Detailing/.test(k.group)).every(k=>k.ok);
+    return {cls: ok?"ok":"bad", html: isFinite(nReq)
+      ? `Need <b>${f(F.AsDes,0)} mm²</b> (${F.AsReq>F.AsMin?"strength":"minimum steel"} governs), so at least <b>${Math.max(nReq,nFit)}-Ø${f(F.db,0)}</b>. Providing ${F.n}-Ø${f(F.db,0)} = ${f(F.As,0)} mm². ` +
+        (F.shortDir ? (F.banded ? `Place ${F.nBand} in the band centred on the column. ` : `Even spacing meets the band rule. `) : "") +
+        (F.top ? (F.top.ok ? `Top bars along ${F.dir} carry the hogging of ${f(F.top.Mhog,1)} kN·m. ` : `Hogging of ${f(F.top.Mhog,1)} kN·m needs about ${isFinite(F.top.AsT)?f(Math.max(F.top.AsT,1),0):"–"} mm² of top bars along ${F.dir}. `) : "") +
+        (F.dev.some(D=>!D.skip && D.avail<D.need) ? `Straight bars cannot develop at one face; hook them.` : "")
+      : "The footing is too shallow for this moment. Increase h."};
+  };
+  hints.barL=barHint(FL); hints.barB=barHint(FB);
+  const anyTop = !!(FL.top||FB.top);
+  hints.top={cls: anyTop ? ((FL.top?FL.top.ok:true)&&(FB.top?FB.top.ok:true) ? "ok":"bad") : "ok", html: anyTop
+    ? `Part of the base lifts off under factored load, so the footing hogs: ${FL.top?`${f(FL.top.Mhog,1)} kN·m along L (need ${isFinite(FL.top.AsT)?f(FL.top.AsT,0):"–"} mm²)`:""}${FL.top&&FB.top?" and ":""}${FB.top?`${f(FB.top.Mhog,1)} kN·m along B (need ${isFinite(FB.top.AsT)?f(FB.top.AsT,0):"–"} mm²)`:""}.`
+    : `No hogging: the soil carries the self weight everywhere, so top bars are not needed by calculation.`};
+
+  return finish();
+
+  function finish(){
+    const graded=checks.filter(k=>!k.info), failed=graded.filter(k=>!k.ok), allOk=!failed.length;
+    const stt = ok => ok ? "PASS" : "FAIL";
+    const gOk = g => graded.filter(k=>k.group===g).every(k=>k.ok);
+    const dirOk = (g,dir) => graded.filter(k=>k.group===g && new RegExp(`along ${dir}$`).test(strip(k.name))).every(k=>k.ok);
+    const inRows=inputRows();
+    const flexRow = F => [`Bars along ${F.dir}`, `${F.n}-Ø${f(F.db,0)} = ${f(F.As,0)} mm²`, `M<sub>u</sub> = ${f(F.Mu,1)}, φM<sub>n</sub> = ${f(F.phiMn,1)} kN·m; need ${f(F.AsDes,0)} mm²${F.banded?`; ${F.nBand} bars in the band`:""}${F.top?`; hogging ${f(F.top.Mhog,1)} kN·m`:""}`, stt(dirOk("Flexure",F.dir))];
+    const sumRows=[
+      {g:"Design basis"},
+      ["Design code", edName, `Eccentric footing, column at x = ${sg(ox,0)}, y = ${sg(oy,0)} mm`, ""],
+      ["Footing", `${f(L,2)} × ${f(B,2)} m, h = ${f(h,0)} mm`, `d<sub>L</sub> = ${f(dL,0)} mm, d<sub>B</sub> = ${f(dB,0)} mm`, stt(gOk("Materials and depth"))],
+      {g:"Soil and stability"},
+      ["Service resultant", `e<sub>x</sub> = ${sg(ex*1000,0)}, e<sub>y</sub> = ${sg(ey*1000,0)} mm`, `Kern ratio ${f(kern,3)}; contact ${SS.ok?f(SS.frac*100,1)+"%":"none"}`, stt(SS.ok && SS.frac*100>=minContact-0.05)],
+      ["Soil pressure", SS.ok?`${f(qcmp,1)} kPa (${qtype})`:"–", `Allowable ${f(qa,1)} kPa`, stt(SS.ok && qcmp<=qa)],
+      ["Overturning and sliding", `FS ${[Mov_y!==0?f(FSox,2):"", Mov_x!==0?f(FSoy,2):"", H>0?f(FSs,2):""].filter(Boolean).join(", ") || "not applicable"}`, "Minimum 1.5", stt(graded.filter(k=>/Overturning|Sliding/.test(k.name)).every(k=>k.ok))],
+      ["Factored pressure", SU.ok?`up to ${f(SU.qmax,1)} kPa`:"–", SU.ok?`Contact ${f(SU.frac*100,1)}%, self weight ${f(wu,2)} kPa`:"", stt(SU.ok)],
+      ...(SU.ok ? [
+      {g:"Flexure"}, flexRow(FL), flexRow(FB),
+      {g:"Shear"},
+      ["One-way, along L", `φV<sub>c</sub> = ${f(SL.phiVc,1)} kN`, `V<sub>u</sub> = ${f(SL.Vu,1)} kN`, stt(SL.phiVc>=SL.Vu)],
+      ["One-way, along B", `φV<sub>c</sub> = ${f(SB.phiVc,1)} kN`, `V<sub>u</sub> = ${f(SB.Vu,1)} kN`, stt(SB.phiVc>=SB.Vu)],
+      ["Punching", `φv<sub>c</sub> = ${f(PS.phivc,3)} MPa`, `v<sub>u</sub> = ${f(PS.vu,3)} MPa, ${kind}`, stt(PS.ns>=2 && PS.vu<=PS.phivc)],
+      {g:"Bearing and dowels"},
+      ["Bearing", `φB<sub>n</sub> = ${f(Math.min(phiBcol,phiBftg),0)} kN`, `P<sub>u</sub> = ${f(Pu,0)} kN`, stt(Pu<=phiBcol && Pu<=phiBftg)],
+      ["Dowels", `${nd}-Ø${f(dbd,0)} = ${f(Asd,0)} mm²`, `Minimum ${f(Asdmin,0)} mm²; ℓ<sub>dc</sub> = ${f(ldc,0)} mm, ${f(availD,0)} mm available`, stt(Asd>=Asdmin && availD>=ldc)],
+      {g:"Detailing"},
+      ["Spacing", `${f(FL.sMaxP,0)} / ${f(FB.sMaxP,0)} mm`, `Bars along L / along B; limit ${f(smax,0)} mm`, stt(graded.filter(k=>/spacing, bars/.test(k.name)).every(k=>k.ok))],
+      ["Development", `ℓ<sub>d</sub> = ${f(FL.ld,0)} / ${f(FB.ld,0)} mm`, "Reduced for excess steel at each face", stt(graded.filter(k=>/Development past/.test(k.name)).every(k=>k.ok))]] : []),
+      {g:"Result"},
+      ["Checks satisfied", `${graded.length-failed.length} of ${graded.length}`, failed.length ? "See items to resolve" : "", ""]
+    ];
+    const outcomeRow=["Overall outcome", allOk?"Design adequate":"Design not adequate", allOk?"All checks satisfied":`${failed.length} check${failed.length>1?"s":""} not satisfied`, stt(allOk)];
+    const actions=failed.map(k=>[k.name,k.ref,k.demand,k.capacity,advice(k.name)]);
+    const schedule = SU.ok ? [
+      ["a","Bottom bars along L", bottom==="L"?"Bottom layer":"Second layer", nL, dbL, FL.banded?`${FL.nBand} at ${f(FL.sBand,0)} in band`+(FL.nOut?`, rest ≤ ${f(FL.sOut,0)}`:""):`${f(FL.sMaxP,0)} c/c`, `Length ${f(Lmm-2*cov,0)} mm` + (FL.dev.some(D=>!D.skip&&D.avail<D.need)?", hooked at the short end":", straight")],
+      ["b","Bottom bars along B", bottom==="B"?"Bottom layer":"Second layer", nB, dbB, FB.banded?`${FB.nBand} at ${f(FB.sBand,0)} in band`+(FB.nOut?`, rest ≤ ${f(FB.sOut,0)}`:""):`${f(FB.sMaxP,0)} c/c`, `Length ${f(Bmm-2*cov,0)} mm` + (FB.dev.some(D=>!D.skip&&D.avail<D.need)?", hooked at the short end":", straight")],
+      ...(ntL>0?[["d","Top bars along L","Top", ntL, dbt, `${f((Bmm-2*covT-dbt)/Math.max(ntL-1,1),0)} c/c`, `Length ${f(Lmm-2*covT,0)} mm`]]:[]),
+      ...(ntB>0?[["e","Top bars along B","Top", ntB, dbt, `${f((Lmm-2*covT-dbt)/Math.max(ntB-1,1),0)} c/c`, `Length ${f(Bmm-2*covT,0)} mm`]]:[]),
+      ["c","Column dowels","At the column",nd,dbd,"–",`At least ${f(ldc,0)} mm straight into the footing, 90° bend on the bottom mat`]] : [];
+    return {v,edName,inRows,steps,checks,sumRows,outcomeRow,actions,allOk,failed,schedule,hints,
+      SS,SU,ex,ey,exu,eyu,qcmp,over,kern,wu,FL,FB,SL,SB,PS,davg,dL,dB,Pu,ldc,
+      geo:{L,B,h,c1,c2,xc,yc,cov,covT,nL,nB,dbL,dbB,ntL,ntB,dbt,bottom,Df,nd,dbd,davg,dL,dB,FL,FB}};
+  }
+  function inputRows(){ return [
+    ["Code edition", edName, ""],
+    ["Column c<sub>1</sub> × c<sub>2</sub> / column f'c", `${f(c1,0)} × ${f(c2,0)} / ${f(fcc,1)}`, "mm / MPa"],
+    ["Column position x / y from footing centre", `${sg(ox,0)} / ${sg(oy,0)}`, "mm"],
+    ["Dowels", `${nd}-Ø${f(dbd,0)}`, ""],
+    ["Service loads P<sub>D</sub> / P<sub>L</sub>", `${f(PD,1)} / ${f(PL,1)}`, "kN"],
+    ["Service moments M<sub>sx</sub> / M<sub>sy</sub>", `${sg(Msx,1)} / ${sg(Msy,1)}`, "kN·m"],
+    ["Service horizontal loads H<sub>x</sub> / H<sub>y</sub>", `${sg(Hx,1)} / ${sg(Hy,1)}`, "kN"],
+    ["Factored P<sub>u</sub>", f(Pu,1), "kN"],
+    ["Factored M<sub>ux</sub> / M<sub>uy</sub>", `${sg(Mux,1)} / ${sg(Muy,1)}`, "kN·m"],
+    ["Factored V<sub>ux</sub> / V<sub>uy</sub>", `${sg(Vux,1)} / ${sg(Vuy,1)}`, "kN"],
+    ["Allowable soil pressure / minimum contact", `${f(qa,1)} (${qtype}) / ${f(minContact,0)}%`, "kPa"],
+    ["D<sub>f</sub> / γ<sub>s</sub> / γ<sub>c</sub> / μ", `${f(Df,2)} / ${f(gs,1)} / ${f(gc,1)} / ${f(mu,2)}`, "m / kN/m³"],
+    ["f'<sub>c</sub> / f<sub>y</sub> / E<sub>s</sub> / ε<sub>cu</sub>", `${f(fc,1)} / ${f(fy,0)} / ${f(Es,0)} / ${f(ecu,4)}`, "MPa"],
+    ["Footing L × B × h", `${f(L,2)} × ${f(B,2)} × ${f(h,0)}`, "m, m, mm"],
+    ["Bottom bars along L / along B", `${nL}-Ø${f(dbL,0)} / ${nB}-Ø${f(dbB,0)}, bars along ${bottom} at the bottom`, ""],
+    ["Top bars along L / along B", (ntL||ntB) ? `${ntL} / ${ntB} of Ø${f(dbt,0)}, cover ${f(covT,0)} mm` : "None", ""],
+    ["Bottom cover / max aggregate", `${f(cov,0)} / ${f(agg,0)}`, "mm"],
+    ["Size effect in shear", SIZE_NAME[sizeEff], ""]]; }
+  function failEarly(){
+    const dummy={phiVc:1,Vu:0};
+    return Object.assign(finish0(), {});
+  }
+  function finish0(){
+    const graded=checks.filter(k=>!k.info), failed=graded.filter(k=>!k.ok);
+    const hints={offset:{cls:"bad",html:"The factored resultant falls outside the footing. Enlarge the footing toward the resultant or move the column toward the centre."},
+      size:{cls:(SS.ok&&qcmp<=qa)?"ok":"bad",html:`Soil pressure ${SS.ok?f(qcmp,0):"–"} kPa against ${f(qa,0)} kPa.`},depth:{cls:"bad",html:"Not checked: no factored equilibrium."},
+      barL:{cls:"bad",html:"Not checked."},barB:{cls:"bad",html:"Not checked."},top:{cls:"bad",html:"Not checked."}};
+    return {v,edName,inRows:inputRows(),steps,checks,sumRows:[{g:"Result"},["Checks satisfied",`${graded.length-failed.length} of ${graded.length}`,"Factored equilibrium fails, so the concrete design was not run",""]],
+      outcomeRow:["Overall outcome","Design not adequate",`${failed.length} check${failed.length>1?"s":""} not satisfied`,"FAIL"],
+      actions:failed.map(k=>[k.name,k.ref,k.demand,k.capacity,advice(k.name)]),allOk:false,failed,schedule:[],hints,
+      SS,SU,ex,ey,exu,eyu,qcmp,over,kern,wu,Pu,early:true,dL,dB,
+      geo:{L,B,h,c1,c2,xc,yc,cov,covT,nL,nB,dbL,dbB,ntL,ntB,dbt,bottom,Df,nd,dbd,davg,dL,dB}};
+  }
+}
+
+function advice(name){
+  const s=strip(name);
+  if(s.startsWith("Footing concrete")||s.startsWith("Column concrete")) return "Use f'c of at least 17 MPa.";
+  if(s.startsWith("Bar fy")) return "Use bars with fy no more than 550 MPa.";
+  if(s.startsWith("Cover to bottom")) return "Provide 75 mm cover to the bottom bars.";
+  if(s.startsWith("Cover to top")) return "Increase the top cover.";
+  if(s.startsWith("Depth above")) return "Increase h.";
+  if(s.startsWith("Resultant within")||s.startsWith("Factored resultant")) return "Enlarge the footing toward the resultant or move the column toward the footing centre.";
+  if(s.startsWith("Maximum soil")) return "Enlarge the footing, mainly toward the resultant, or move the column toward the position for uniform pressure.";
+  if(s.startsWith("Base in contact")) return "Move the column toward the position for uniform pressure, or enlarge the footing toward the resultant. A strap beam to the next column also works.";
+  if(s.startsWith("Overturning")) return "Enlarge the footing in the direction of the moment, or deepen it to add soil weight.";
+  if(s.startsWith("Sliding")) return "Enlarge or deepen the footing, add a shear key, or count passive resistance if the soil allows.";
+  if(s.startsWith("Footing depth adequate")) return "Increase h.";
+  if(s.startsWith("Steel area")) return "Add bars or use a larger bar.";
+  if(s.startsWith("Strain limit")) return "Reduce steel or increase h.";
+  if(s.startsWith("Flexural strength")) return "Add bars or increase h.";
+  if(s.startsWith("Top bars")) return "Add top bars in this direction, or move the column so the whole base stays in contact.";
+  if(s.startsWith("One-way")) return "Increase h, or add flexural steel to raise ρw.";
+  if(s.startsWith("Punching")) return "Increase h, use a larger column or pedestal, or keep the column further from the footing edge.";
+  if(s.startsWith("Bearing on the column")) return "Raise column f'c or design the dowels to carry the excess (16.3.3).";
+  if(s.startsWith("Bearing on the footing")) return "Raise footing f'c, move the column away from the edge, or design the dowels to carry the excess (16.3.3).";
+  if(s.startsWith("Dowel area")) return "Add dowels or use larger bars.";
+  if(s.startsWith("Dowel development")) return "Increase h or use smaller dowels.";
+  if(s.startsWith("Maximum spacing")) return "Add bars to reduce spacing.";
+  if(s.startsWith("Minimum clear")) return "Use fewer, larger bars.";
+  if(s.startsWith("Development past")) return "End the bars with standard hooks at that face, or use smaller bars.";
+  return "";
+}
+</script>
+<script>
+const DEFAULTS = {ed:"19",sizeEff:"neglect",c1:400,c2:500,ox:300,oy:0,fcc:30,nd:8,dbd:20,PD:900,PL:500,Msx:40,Msy:-200,Hx:-20,Hy:15,Pu:1880,Mux:60,Muy:-280,Vux:-30,Vuy:22,
+  qa:250,qtype:"net",Df:1.5,gs:18,mu:0.45,minContact:100,fc:25,fy:420,Es:200000,ecu:0.003,gc:24,L:3.4,B:2.6,h:750,nL:18,dbL:16,nB:23,dbB:16,bottom:"L",cov:75,agg:20,ntL:0,ntB:0,dbt:12,covT:50};
+const ids = Object.keys(DEFAULTS);
+const POS = ["c1","c2","fcc","dbd","PD","Pu","qa","Df","gs","mu","fc","fy","Es","ecu","gc","L","B","h","dbL","dbB","cov","agg","dbt","covT"];
+const NONNEG = ["PL","minContact","ntL","ntB"];
+const SIGNED = ["ox","oy","Msx","Msy","Hx","Hy","Mux","Muy","Vux","Vuy"];
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g, ch => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[ch]));
+const today = () => new Date().toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+
+function read(){
+  const v = {};
+  ids.forEach(k => { const el=$(k); v[k] = (el.tagName==="SELECT") ? el.value : parseFloat(el.value); });
+  v.proj = $("proj").value.trim(); v.mark = $("mark").value.trim();
+  return v;
+}
+
+let M = null, stale = false;
+
+function calculate(){
+  const v = read();
+  const bad = POS.filter(k => !(v[k] > 0)).concat(NONNEG.filter(k => !(v[k] >= 0))).concat(SIGNED.filter(k => !isFinite(v[k])));
+  if (v.minContact > 100) bad.push("minimum contact (0 to 100%)");
+  ["ntL","ntB"].forEach(k => { if (v[k] % 1 || v[k] === 1) bad.push(k + " (0 or at least 2)"); });
+  ["nL","nB"].forEach(k => { if (!(v[k] >= 2) || v[k] % 1) bad.push(k + " (whole number, at least 2)"); });
+  if (!(v.nd >= 4) || v.nd % 1) bad.push("dowels (whole number, at least 4)");
+  if (bad.length){ toast("Check these inputs: " + bad.join(", "), true); return; }
+  if (Math.abs(v.ox) + v.c1/2 > v.L*500 + 1e-6 || Math.abs(v.oy) + v.c2/2 > v.B*500 + 1e-6){ toast("The column must sit inside the footing: |xc| + c1/2 ≤ L/2 and |yc| + c2/2 ≤ B/2.", true); return; }
+  if (v.h <= v.cov + v.dbL + v.dbB){ toast("The footing is too thin for this cover and bar size.", true); return; }
+  try { M = design(v); } catch(e){ toast("Calculation failed: " + e.message, true); return; }
+  stale = false;
+  render();
+  toast("Calculated.");
+}
+
+const badge = s => s ? `<span class="badge ${s==="PASS"?"pass":s==="FAIL"?"fail":"info"}">${s}</span>` : "";
+const statusOf = k => k.info ? "NOTE" : (k.ok ? "PASS" : "FAIL");
+const headline = () => { const v=M.v;
+  return `${f(v.L,2)} × ${f(v.B,2)} m × ${f(v.h,0)} mm footing, ${v.nL}-Ø${f(v.dbL,0)} along L and ${v.nB}-Ø${f(v.dbB,0)} along B, ${f(v.c1,0)} × ${f(v.c2,0)} mm column at x = ${sg(v.ox,0)}, y = ${sg(v.oy,0)} mm`; };
+const strengthLine = () => M.early
+  ? `The factored resultant falls outside the footing, so the concrete design could not be run.`
+  : `Soil ${f(M.qcmp,0)} kPa against ${f(M.v.qa,0)} kPa with ${f(M.SS.frac*100,0)}% of the base in contact; punching (${M.PS.ns===4?"interior":M.PS.ns===3?"edge":"corner"}) v<sub>u</sub> = ${f(M.PS.vu,3)} against φv<sub>c</sub> = ${f(M.PS.phivc,3)} MPa; one-way shear ${f(M.SL.Vu,0)}/${f(M.SL.phiVc,0)} kN (L) and ${f(M.SB.Vu,0)}/${f(M.SB.phiVc,0)} kN (B); M<sub>u</sub>/φM<sub>n</sub> = ${f(M.FL.Mu/M.FL.phiMn,2)} (L) and ${f(M.FB.Mu/M.FB.phiMn,2)} (B).`;
+
+function render(){
+  const {v, edName, inRows, steps, checks, sumRows, outcomeRow, actions, allOk, failed} = M;
+  $("empty").hidden = true; $("results").hidden = false; $("stale").hidden = true;
+  $("verdict").className = "verdict " + (allOk ? "pass" : "fail");
+  $("verdict").innerHTML = `<div class="big">${allOk ? "PASS" : "FAIL"}</div>
+    <div class="txt"><b>${esc(v.mark || "Footing")}: ${headline()}</b> (${edName}). ${strengthLine()}
+    ${allOk ? "All checks satisfied." : failed.length + " check" + (failed.length>1?"s":"") + " not satisfied: " + failed.map(k=>strip(k.name)).join("; ") + "."}</div>`;
+
+  let lastG = "", i = 0;
+  $("checks").innerHTML = `<tr><th>#</th><th>Check</th><th>Clause</th><th>Required</th><th>Provided / actual</th><th>Status</th></tr>` +
+    checks.map(k => { let r = "";
+      if (k.group !== lastG){ lastG = k.group; r += `<tr class="grp"><td colspan="6">${k.group}</td></tr>`; }
+      return r + `<tr><td>${++i}</td><td>${k.name}</td><td>${k.ref}</td><td class="num">${k.demand}</td><td class="num">${k.capacity}</td><td>${badge(statusOf(k))}</td></tr>`; }).join("");
+
+  $("inputs").innerHTML = `<tr><th>Parameter</th><th>Value</th><th>Unit</th></tr>` + inRows.map(r=>`<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td>${r[2]}</td></tr>`).join("");
+
+  let lastP = "";
+  $("steps").innerHTML = steps.map((s,i)=>{ let h = "";
+    if (s.part !== lastP){ lastP = s.part; h += `<div class="part">${s.part}</div>`; }
+    return h + `<div class="step"><div class="step-h"><b>Step ${i+1}. ${s.title}</b><span class="ref">${edName} ${s.ref}</span></div>
+     <div class="calc">${s.lines.join("<br>")}</div>${s.note?`<p>${s.note}</p>`:""}</div>`; }).join("");
+
+  $("figs").innerHTML = plotSvgs(M).map(p=>p.svg).join("");
+  document.querySelector("aside").classList.remove("hints-stale");
+  [["offset","hint_offset"],["size","hint_size"],["depth","hint_depth"],["barL","hint_barL"],["barB","hint_barB"],["top","hint_top"]].forEach(([k,id]) => { const h = M.hints[k], el = $(id); el.hidden = false; el.className = "hint " + h.cls; el.innerHTML = h.html; });
+
+  let html = `<div class="tscroll"><table><tr><th>Item</th><th>Result</th><th>Remark</th><th>Status</th></tr>` +
+    sumRows.map(r => r.g ? `<tr class="grp"><td colspan="4">${r.g}</td></tr>` : `<tr><td>${r[0]}</td><td class="num">${r[1]}</td><td>${r[2]}</td><td>${badge(r[3])}</td></tr>`).join("") +
+    `<tr class="total"><td>${outcomeRow[0]}</td><td>${outcomeRow[1]}</td><td>${outcomeRow[2]}</td><td>${badge(outcomeRow[3])}</td></tr></table></div>`;
+  if (actions.length){
+    html += `<h4>Items to resolve</h4><div class="tscroll"><table><tr><th>Check</th><th>Clause</th><th>Required</th><th>Actual</th><th>Action</th></tr>` +
+      actions.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td class="num">${r[2]}</td><td class="num">${r[3]}</td><td>${r[4]}</td></tr>`).join("") + `</table></div>`;
+  }
+  html += `<p class="note">${SCOPE_NOTE}</p>`;
+  $("summary").innerHTML = html;
+
+  const det = detailSvgs(M);
+  $("detail").innerHTML = `<figure>${det.sec}<figcaption>Plan of bottom reinforcement (to scale)</figcaption></figure><figure>${det.elev}<figcaption>Section A-A along L (to scale)</figcaption></figure>`;
+  $("schedule").innerHTML = `<tr><th>Mark</th><th>Description</th><th>Location</th><th>No.</th><th>Dia (mm)</th><th>Spacing (mm)</th><th>Remark</th></tr>` +
+    M.schedule.map(r=>`<tr>${r.map((c,j)=>`<td${j>=3&&j<=5?' class="num"':''}>${c}</td>`).join("")}</tr>`).join("");
+  updateButtons();
+}
+
+// ---------- soil pressure plans ----------
+const FONT = 'font-family="Helvetica, Arial, sans-serif"';
+function clipPoly(L,B,a,b,c){ // region a + b x + c y >= 0 inside the rectangle
+  const poly=[[-L/2,-B/2],[L/2,-B/2],[L/2,B/2],[-L/2,B/2]], out=[];
+  for(let i=0;i<4;i++){ const p=poly[i], q=poly[(i+1)%4], fp=a+b*p[0]+c*p[1], fq=a+b*q[0]+c*q[1];
+    if(fp>=0) out.push(p); if((fp>=0)!==(fq>=0)){ const k=fp/(fp-fq); out.push([p[0]+k*(q[0]-p[0]),p[1]+k*(q[1]-p[1])]); } }
+  return out;
+}
+function pressurePlan(M, mode){
+  const g=M.geo, L=g.L, B=g.B, W=440, H=400;
+  const S = mode==="service" ? M.SS : M.SU;
+  const sc=Math.min(260/L, 230/B), w=L*sc, hh=B*sc, ox=(W-w)/2, oy=72;
+  const PX=x=>ox+(x+L/2)*sc, PY=y=>oy+(B/2-y)*sc;
+  const title = mode==="service" ? "Service pressure (gross)" : "Factored contact pressure";
+  const sub = !S.ok ? "Resultant outside the footing: no equilibrium" : (mode==="service"
+    ? `Contact ${f(S.frac*100,1)}%; ${M.v.qtype==="net" ? `net maximum ${f(M.qcmp,1)} kPa` : `gross allowable ${f(M.v.qa,1)} kPa`}`
+    : `Contact ${f(S.frac*100,1)}%; self weight ${f(M.wu,2)} kPa deducted in design`);
+  let body="", lab="", crit="";
+  const res = mode==="service" ? [M.ex,M.ey] : [M.exu,M.eyu];
+  if(S.ok){
+    const qs=S.corners, qmx=Math.max(...qs);
+    const poly=clipPoly(L,B,S.a,S.b,S.c).map(p=>`${PX(p[0]).toFixed(1)},${PY(p[1]).toFixed(1)}`).join(" ");
+    const gl=Math.hypot(S.b*L,S.c*B)||1, gx=0.5+0.5*S.b*L/gl, gy=0.5-0.5*S.c*B/gl;
+    body=`<defs><linearGradient id="g${mode}" x1="${1-gx}" y1="${1-gy}" x2="${gx}" y2="${gy}"><stop offset="0" stop-color="hsl(210,45%,92%)"/><stop offset="1" stop-color="hsl(210,45%,70%)"/></linearGradient>
+      <pattern id="lift${mode}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="7" stroke="#c9c5b8" stroke-width="1"/></pattern></defs>
+      <rect x="${ox}" y="${oy}" width="${w}" height="${hh}" fill="url(#lift${mode})"/>
+      <polygon points="${poly}" fill="url(#g${mode})"/>`;
+    if(!S.full){ const zl=clipPoly(L,B,S.a,S.b,S.c).filter(p=>Math.abs(S.a+S.b*p[0]+S.c*p[1])<1e-6*Math.max(1,S.a));
+      if(zl.length>=2) body+=`<line x1="${PX(zl[0][0])}" y1="${PY(zl[0][1])}" x2="${PX(zl[1][0])}" y2="${PY(zl[1][1])}" stroke="#7a5a00" stroke-width="1.6"/>`; }
+    const t=(x,y,v,anchor)=>`<text x="${x}" y="${y}" text-anchor="${anchor}" font-weight="bold" fill="${v>0?"#1f4e79":"#8a8f94"}">${f(v,1)}</text>`;
+    lab=t(ox-6,oy-8,qs[0],"end")+t(ox+w+6,oy-8,qs[1],"start")+t(ox+w+6,oy+hh+18,qs[2],"start")+t(ox-6,oy+hh+18,qs[3],"end");
+  }
+  if(mode==="factored" && !M.early){
+    const xc=g.xc*1000, yc=g.yc*1000, Lm=L*1000, Bm=B*1000;
+    [-1,1].forEach(s=>{ const xl=xc+s*(g.c1/2+M.dL); if(Math.abs(xl)<Lm/2) crit+=`<line x1="${PX(xl/1000)}" y1="${oy}" x2="${PX(xl/1000)}" y2="${oy+hh}" stroke="#b3261e" stroke-dasharray="6 4" stroke-width="1.2"/>`;
+      const yl=yc+s*(g.c2/2+M.dB); if(Math.abs(yl)<Bm/2) crit+=`<line x1="${ox}" y1="${PY(yl/1000)}" x2="${ox+w}" y2="${PY(yl/1000)}" stroke="#7a5a00" stroke-dasharray="6 4" stroke-width="1.2"/>`; });
+    M.PS.segs.forEach(sg_=>crit+=`<line x1="${PX(sg_.x0)}" y1="${PY(sg_.y0)}" x2="${PX(sg_.x1)}" y2="${PY(sg_.y1)}" stroke="#1d2329" stroke-dasharray="2 3" stroke-width="1.6"/>`);
+  }
+  const inside = Math.abs(res[0])<L/2 && Math.abs(res[1])<B/2;
+  const rx=PX(Math.max(-L/2,Math.min(L/2,res[0]))), ry=PY(Math.max(-B/2,Math.min(B/2,res[1])));
+  return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" ${FONT} font-size="12" fill="#1d2329">
+    <rect width="${W}" height="${H}" fill="#fff"/>
+    <text x="${W/2}" y="20" text-anchor="middle" font-size="13" font-weight="bold">${title}</text>
+    <text x="${W/2}" y="38" text-anchor="middle" fill="#5d6670" font-size="11">${sub}</text>
+    ${body}
+    <rect x="${ox}" y="${oy}" width="${w}" height="${hh}" fill="none" stroke="#1d2329" stroke-width="1.4"/>
+    <line x1="${PX(0)}" y1="${oy-4}" x2="${PX(0)}" y2="${oy+hh+4}" stroke="#5d6670" stroke-width="0.6" stroke-dasharray="8 3 2 3"/>
+    <line x1="${ox-4}" y1="${PY(0)}" x2="${ox+w+4}" y2="${PY(0)}" stroke="#5d6670" stroke-width="0.6" stroke-dasharray="8 3 2 3"/>
+    ${crit}
+    <rect x="${PX(g.xc-g.c1/2000)}" y="${PY(g.yc+g.c2/2000)}" width="${g.c1/1000*sc}" height="${g.c2/1000*sc}" fill="#8a8f94" stroke="#1d2329"/>
+    <g stroke="${inside?"#b3261e":"#b3261e"}" stroke-width="1.6"><line x1="${rx-6}" y1="${ry-6}" x2="${rx+6}" y2="${ry+6}"/><line x1="${rx-6}" y1="${ry+6}" x2="${rx+6}" y2="${ry-6}"/></g>
+    <text x="${rx+8}" y="${ry-8}" fill="#b3261e" font-size="11">R</text>
+    ${lab}
+    <line x1="${ox}" y1="${oy+hh+34}" x2="${ox+w}" y2="${oy+hh+34}" stroke="#1d2329" stroke-width="0.8"/><text x="${ox+w/2}" y="${oy+hh+50}" text-anchor="middle">L = ${f(L,2)} m (x →)</text>
+    <line x1="${ox-40}" y1="${oy}" x2="${ox-40}" y2="${oy+hh}" stroke="#1d2329" stroke-width="0.8"/><text transform="translate(${ox-48},${oy+hh/2}) rotate(-90)" text-anchor="middle">B = ${f(B,2)} m (y →)</text>
+  </svg>`;
+}
+function plotSvgs(M){ return [{svg:pressurePlan(M,"service"), w:440, h:400}, {svg:pressurePlan(M,"factored"), w:440, h:400}]; }
+
+// ---------- reinforcement detail drawings ----------
+function detailSvgs(M){
+  const g=M.geo;
+  if(M.early){ const s=`<svg viewBox="0 0 500 60" width="500" height="60" ${FONT} font-size="13"><rect width="500" height="60" fill="#fff"/><text x="250" y="35" text-anchor="middle" fill="#b3261e">No detail: the factored resultant is outside the footing.</text></svg>`; return {sec:s, elev:s, secW:500, secH:60, elevW:500, elevH:60}; }
+  const {L,B,h,c1,c2,cov,covT,nL,nB,dbL,dbB,ntL,ntB,dbt,bottom,Df,nd,dbd,FL,FB}=g, Lm=L*1000, Bm=B*1000, xcm=g.xc*1000+Lm/2, ycm=g.yc*1000+Bm/2;
+  const dimH=(x1,x2,y,label)=>`<line x1="${x1}" y1="${y}" x2="${x2}" y2="${y}" stroke="#1d2329" stroke-width="0.8"/><line x1="${x1}" y1="${y-5}" x2="${x1}" y2="${y+5}" stroke="#1d2329" stroke-width="0.8"/><line x1="${x2}" y1="${y-5}" x2="${x2}" y2="${y+5}" stroke="#1d2329" stroke-width="0.8"/><text x="${(x1+x2)/2}" y="${y+16}" text-anchor="middle">${label}</text>`;
+  const dimV=(x,y1,y2,label,side)=>`<line x1="${x}" y1="${y1}" x2="${x}" y2="${y2}" stroke="#1d2329" stroke-width="0.8"/><line x1="${x-5}" y1="${y1}" x2="${x+5}" y2="${y1}" stroke="#1d2329" stroke-width="0.8"/><line x1="${x-5}" y1="${y2}" x2="${x+5}" y2="${y2}" stroke="#1d2329" stroke-width="0.8"/><text transform="translate(${x+(side<0?-8:14)},${(y1+y2)/2}) rotate(-90)" text-anchor="middle">${label}</text>`;
+  // plan
+  const sc=Math.min(380/Lm, 330/Bm), w=Lm*sc, hh=Bm*sc, ox=80, oy=40, VW=ox+w+300, VH=oy+hh+104;
+  const X=x=>ox+x*sc, Y=y=>oy+hh-y*sc;
+  let lb="", bb="", tb="";
+  FL.pos.forEach(p=>lb+=`<line x1="${X(cov)}" y1="${Y(p)}" x2="${X(Lm-cov)}" y2="${Y(p)}" stroke="#b3261e" stroke-width="${Math.max(dbL*sc,1.3)}"/>`);
+  FB.pos.forEach(p=>bb+=`<line x1="${X(p)}" y1="${Y(cov)}" x2="${X(p)}" y2="${Y(Bm-cov)}" stroke="#1f4e79" stroke-width="${Math.max(dbB*sc,1.3)}"/>`);
+  if(ntL>1) for(let i=0;i<ntL;i++){ const p=covT+dbt/2+i*(Bm-2*covT-dbt)/(ntL-1); tb+=`<line x1="${X(covT)}" y1="${Y(p)}" x2="${X(Lm-covT)}" y2="${Y(p)}" stroke="#2e7d4f" stroke-width="1" stroke-dasharray="5 3"/>`; }
+  if(ntB>1) for(let i=0;i<ntB;i++){ const p=covT+dbt/2+i*(Lm-2*covT-dbt)/(ntB-1); tb+=`<line x1="${X(p)}" y1="${Y(covT)}" x2="${X(p)}" y2="${Y(Bm-covT)}" stroke="#2e7d4f" stroke-width="1" stroke-dasharray="5 3"/>`; }
+  const bars = (bottom==="L" ? bb+lb : lb+bb) + tb;
+  let band="";
+  [FL,FB].forEach(F=>{ if(!F.banded) return; const s0=F.b0, s1=s0+F.bandW;
+    if(F.dir==="B") band+=`<line x1="${X(s0)}" y1="${oy-10}" x2="${X(s0)}" y2="${oy+hh+10}" stroke="#7a5a00" stroke-dasharray="5 3"/><line x1="${X(s1)}" y1="${oy-10}" x2="${X(s1)}" y2="${oy+hh+10}" stroke="#7a5a00" stroke-dasharray="5 3"/><text x="${(X(s0)+X(s1))/2}" y="${oy-14}" text-anchor="middle" fill="#7a5a00" font-size="11">band ${f(F.bandW/1000,2)} m</text>`;
+    else band+=`<line x1="${ox-10}" y1="${Y(s0)}" x2="${ox+w+10}" y2="${Y(s0)}" stroke="#7a5a00" stroke-dasharray="5 3"/><line x1="${ox-10}" y1="${Y(s1)}" x2="${ox+w+10}" y2="${Y(s1)}" stroke="#7a5a00" stroke-dasharray="5 3"/><text transform="translate(${ox-14},${(Y(s0)+Y(s1))/2}) rotate(-90)" text-anchor="middle" fill="#7a5a00" font-size="11">band ${f(F.bandW/1000,2)} m</text>`; });
+  const cx0=X(xcm-c1/2), cy0=Y(ycm+c2/2);
+  let dow=""; const ce=Math.min(60, c1/4, c2/4), iw=c1-2*ce, ih=c2-2*ce;
+  let best=[2,2,1e9];
+  for(let ax=2; ax<=nd/2; ax++){ const ay=(nd-2*ax)/2+2; if(ay<2||ay%1) continue; const d=Math.abs(iw/(ax-1)-ih/(ay-1)); if(d<best[2]) best=[ax,ay,d]; }
+  const [ax,ay]=best, pts=[];
+  for(let i=0;i<ax;i++){ pts.push([i*iw/(ax-1),0]); pts.push([i*iw/(ax-1),ih]); }
+  for(let j=1;j<ay-1;j++){ pts.push([0,j*ih/(ay-1)]); pts.push([iw,j*ih/(ay-1)]); }
+  pts.forEach(([x,y])=>dow+=`<circle cx="${cx0+(ce+x)*sc}" cy="${cy0+(ce+y)*sc}" r="${Math.max(dbd/2*sc,2)}" fill="#1d2329"/>`);
+  const cxR=ox+w+50;
+  const call=(xF,yF,yT,t1,t2,col)=>`<polyline points="${xF},${yF} ${cxR-10},${yT} ${cxR-2},${yT}" fill="none" stroke="${col}" stroke-width="0.9"/><circle cx="${xF}" cy="${yF}" r="2" fill="${col}"/><text x="${cxR+2}" y="${yT+4}" font-weight="bold" fill="${col}">${t1}</text><text x="${cxR+2}" y="${yT+19}" fill="#5d6670">${t2}</text>`;
+  const ac=Y(ycm);
+  const sp = F => F.banded ? `${F.nBand} in band @ ${f(F.sBand,0)}` + (F.nOut?`, ${F.nOut} outside`:"") : `@ ${f(F.sMaxP,0)} c/c`;
+  const plan=`<svg viewBox="0 0 ${VW} ${VH}" width="${VW}" height="${VH}" ${FONT} font-size="12" fill="#1d2329">
+    <rect width="${VW}" height="${VH}" fill="#fff"/>
+    <rect x="${ox}" y="${oy}" width="${w}" height="${hh}" fill="#f1efe8" stroke="#1d2329" stroke-width="1.5"/>
+    ${bars}${band}
+    <rect x="${cx0}" y="${cy0}" width="${c1*sc}" height="${c2*sc}" fill="#d8d5cc" stroke="#1d2329" stroke-width="1.3"/>${dow}
+    <line x1="${ox-24}" y1="${ac}" x2="${ox+w+24}" y2="${ac}" stroke="#1d2329" stroke-dasharray="10 3 2 3" stroke-width="0.8"/>
+    <text x="${ox-30}" y="${ac+4}" text-anchor="end" font-weight="bold">A</text><text x="${ox+w+30}" y="${ac+4}" font-weight="bold">A</text>
+    ${dimH(ox,ox+w,oy+hh+24,`L = ${f(Lm,0)}`)}
+    ${dimH(ox,X(xcm),oy+hh+56,`${f(xcm,0)} to column centre`)}
+    ${dimV(ox-48,oy,oy+hh,`B = ${f(Bm,0)}`,-1)}
+    ${call(X(Lm*0.82), Y(FL.pos[FL.pos.length-1]), oy+8, `(a) ${nL}-Ø${f(dbL,0)} along L`, `${sp(FL)}, ${bottom==="L"?"bottom":"second"} layer`, "#b3261e")}
+    ${call(X(FB.pos[FB.pos.length-1]), Y(Bm*0.22), oy+hh*0.40, `(b) ${nB}-Ø${f(dbB,0)} along B`, `${sp(FB)}, ${bottom==="B"?"bottom":"second"} layer`, "#1f4e79")}
+    ${call(cx0+c1*sc, cy0+c2*sc*0.5, oy+hh*0.68, `(c) ${nd}-Ø${f(dbd,0)} dowels`, `column ${f(c1,0)} × ${f(c2,0)}`, "#1d2329")}
+    ${(ntL>1||ntB>1) ? call(X(Lm-covT), Y(covT+dbt/2), oy+hh*0.94, `(d) top bars Ø${f(dbt,0)}, dashed`, `${ntL} along L, ${ntB} along B`, "#2e7d4f") : ""}
+    <text x="${ox}" y="${VH-6}" fill="#5d6670" font-size="11">All dimensions in mm; bottom cover ${f(cov,0)} mm</text></svg>`;
+
+  // section A-A along L through the column
+  const above=300, Dfm=Df*1000, s2=Math.min(560/Lm, 320/(Math.max(Dfm,h)+above)), EW=Lm*s2+250, ox2=90;
+  const topY=40, gY=topY+above*s2, baseY=gY+Math.max(Dfm,h)*s2, ftY=baseY-h*s2, pY=baseY+26, pH=70, EH=pY+pH+74;
+  const X2=x=>ox2+x*s2, colL=X2(xcm-c1/2), colR=X2(xcm+c1/2);
+  const yLb = bottom==="L" ? baseY-(cov+dbL/2)*s2 : baseY-(cov+dbB+dbL/2)*s2;
+  const yBb = bottom==="B" ? baseY-(cov+dbB/2)*s2 : baseY-(cov+dbL+dbB/2)*s2;
+  let dots=""; FB.pos.forEach(p=>dots+=`<circle cx="${X2(p)}" cy="${yBb}" r="${Math.max(dbB/2*s2,1.8)}" fill="#1f4e79"/>`);
+  const topLine = ntL>1 ? `<line x1="${X2(covT)}" y1="${ftY+(covT+dbt/2)*s2}" x2="${X2(Lm-covT)}" y2="${ftY+(covT+dbt/2)*s2}" stroke="#2e7d4f" stroke-width="1.6"/>` : "";
+  const yMat = Math.min(yLb,yBb) - Math.max(dbL,dbB)/2*s2;
+  const dx=[colL+60*s2, colR-60*s2], hook=Math.min(250*s2, (colR-colL)/2);
+  let dsv=""; dx.forEach((x,i)=>{ const toward = (i===0) ? (X2(xcm)-ox2 > hook+10 ? -1 : 1) : (X2(Lm)-X2(xcm) > hook+10 ? 1 : -1); dsv+=`<polyline points="${x},${topY} ${x},${yMat} ${x+toward*hook},${yMat}" fill="none" stroke="#1d2329" stroke-width="${Math.max(dbd*s2,1.6)}"/>`; });
+  const S=M.SU, yl=g.yc, n=40, pts2=[]; let qm=1;
+  for(let i=0;i<=n;i++){ const x=-L/2+L*i/n, q=S.q(x,yl); qm=Math.max(qm,q); pts2.push([x,q]); }
+  const poly=[[-L/2,0],...pts2,[L/2,0]].map(([x,q])=>`${X2((x+L/2)*1000).toFixed(1)},${(pY+q/qm*pH).toFixed(1)}`).join(" ");
+  const qa_=S.q(-L/2,yl), qb_=S.q(L/2,yl);
+  const sec=`<svg viewBox="0 0 ${EW} ${EH}" width="${EW}" height="${EH}" ${FONT} font-size="12" fill="#1d2329">
+    <defs><pattern id="soil" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#c9c2ad" stroke-width="1"/></pattern></defs>
+    <rect width="${EW}" height="${EH}" fill="#fff"/>
+    <rect x="${ox2-40}" y="${gY}" width="${Lm*s2+80}" height="${baseY-gY}" fill="url(#soil)"/>
+    <line x1="${ox2-40}" y1="${gY}" x2="${X2(Lm)+40}" y2="${gY}" stroke="#7a5a00" stroke-width="1.2"/><text x="${X2(Lm)+44}" y="${gY+4}" fill="#7a5a00">ground</text>
+    <rect x="${ox2}" y="${ftY}" width="${Lm*s2}" height="${h*s2}" fill="#f1efe8" stroke="#1d2329" stroke-width="1.5"/>
+    <rect x="${colL}" y="${topY}" width="${colR-colL}" height="${ftY-topY}" fill="#f1efe8" stroke="#1d2329" stroke-width="1.3"/>
+    <line x1="${X2(cov)}" y1="${yLb}" x2="${X2(Lm-cov)}" y2="${yLb}" stroke="#b3261e" stroke-width="${Math.max(dbL*s2,1.8)}"/>
+    ${dots}${topLine}${dsv}
+    ${dimV(ox2-22,ftY,baseY,`h = ${f(h,0)}`,-1)}
+    ${dimV(ox2-58,gY,baseY,`Df = ${f(Dfm,0)}`,-1)}
+    ${dimH(ox2,X2(Lm),pY+pH+32,`L = ${f(Lm,0)}`)}
+    <text x="${X2(Lm)+12}" y="${yLb+4}" fill="#b3261e" font-weight="bold">(a)</text>
+    <text x="${X2(Lm)+12}" y="${yBb-6}" fill="#1f4e79" font-weight="bold">(b)</text>
+    <text x="${Math.min(colR+8, EW-200)}" y="${topY+14}" font-weight="bold">(c) dowels, ≥ ${f(M.ldc,0)} straight</text>
+    <polygon points="${poly}" fill="#e6eef6" stroke="#1f4e79"/>
+    <text x="${ox2+4}" y="${pY+qa_/qm*pH+14}" fill="#1f4e79">${f(qa_,1)} kPa</text>
+    <text x="${X2(Lm)-4}" y="${pY+qb_/qm*pH+14}" text-anchor="end" fill="#1f4e79">${f(qb_,1)} kPa</text>
+    <text x="${X2(Lm/2)}" y="${pY-6}" text-anchor="middle" fill="#5d6670" font-size="11">factored contact pressure along A-A</text>
+    <text x="${ox2-80}" y="${EH-6}" fill="#5d6670" font-size="11">All dimensions in mm</text></svg>`;
+  return {sec:plan, elev:sec, secW:VW, secH:VH, elevW:EW, elevH:EH};
+}
+
+// ---------- state, buttons, exports ----------
+let dl = null;
+const toast = (t, bad) => { const el=$("toast"); el.textContent = t; el.style.color = bad ? "var(--fail)" : "var(--accent)"; };
+function updateButtons(){
+  const ready = !!M && !stale;
+  $("copy").disabled = !ready; $("pdf").disabled = !(ready && dl); $("xls").disabled = !(ready && dl);
+}
+(async () => {
+  if (window.claude && window.claude.use){
+    try { dl = await window.claude.use("downloads"); } catch(e){ dl = null; }
+  } else {
+    // Running as a normal web page (for example GitHub Pages): use an ordinary browser download.
+    dl = { save: async ({filename, data}) => {
+      const url = URL.createObjectURL(data instanceof Blob ? data : new Blob([data]));
+      const a = document.createElement("a"); a.href = url; a.download = filename;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      return {status:"saved"};
+    }};
+  }
+  updateButtons();
+  if (!dl) toast("File export is not available in this view. Open the page in Claude to export.");
+})();
+
+function markStale(){ if (M && !stale){ stale = true; $("stale").hidden = false; document.querySelector("aside").classList.add("hints-stale"); updateButtons(); } }
+function fileBase(){ const m = (M.v.mark || "footing").replace(/[^A-Za-z0-9_-]+/g,"-"); return `Eccentric-footing_${m}_${new Date().toISOString().slice(0,10)}`; }
+async function save(filename, data){
+  if (!dl) return toast("File export is not available in this view.", true);
+  try { await dl.save({filename, data}); toast("Saved " + filename); }
+  catch(e){ toast(e && e.code === "declined" ? "Export cancelled." : "Export failed: " + ((e && (e.message || e.code)) || "unknown error"), true); }
+}
+function svgToImg(svg, w, h){
+  return new Promise((resolve, reject) => {
+    const img = new Image(), t = setTimeout(() => reject(new Error("timeout")), 4000);
+    img.onload = () => { try { clearTimeout(t);
+        const k = 2, cv = document.createElement("canvas"); cv.width = w*k; cv.height = h*k;
+        const cx = cv.getContext("2d"); cx.fillStyle = "#fff"; cx.fillRect(0,0,cv.width,cv.height); cx.drawImage(img,0,0,cv.width,cv.height);
+        resolve(cv.toDataURL("image/jpeg", 0.92));
+      } catch(e){ reject(e); } };
+    img.onerror = () => { clearTimeout(t); reject(new Error("image load failed")); };
+    img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg.replace("<svg ", '<svg xmlns="http://www.w3.org/2000/svg" '));
+  });
+}
+
+const LIB_HELP = "Reload the page. If you opened index.html from a download, keep the lib folder next to it.";
+function loadScript(src){
+  return new Promise((res, rej) => { const s = document.createElement("script"); s.src = src; s.onload = res;
+    s.onerror = () => rej(new Error(src + " could not be loaded. " + LIB_HELP)); document.head.appendChild(s); });
+}
+async function ensureLibs(kind){
+  const need = kind === "pdf"
+    ? [[() => window.jspdf && window.jspdf.jsPDF, "lib/jspdf.umd.min.js"], [() => window.jspdf.jsPDF.API.autoTable, "lib/jspdf.plugin.autotable.min.js"], [() => window.BEAM_FONTS, "lib/fonts.js"]]
+    : [[() => window.XLSX, "lib/xlsx.mini.min.js"]];
+  for (const [ok, src] of need){
+    if (ok()) continue;
+    await loadScript(src);
+    if (!ok()) throw new Error(src + " did not load. " + LIB_HELP);
+  }
+}
+
+async function buildPdf(){
+  await ensureLibs("pdf");
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({unit:"mm", format:"a4"});
+  doc.addFileToVFS("DejaVu.ttf", window.BEAM_FONTS.reg); doc.addFont("DejaVu.ttf","DejaVu","normal");
+  doc.addFileToVFS("DejaVu-Bold.ttf", window.BEAM_FONTS.bold); doc.addFont("DejaVu-Bold.ttf","DejaVu","bold");
+  const L = 14, R = 196, W = R - L, INK = [29,35,41], ACC = [31,78,121], GREEN = [30,122,70], RED = [179,38,30], AMB = [122,90,0];
+  const {v, edName} = M;
+  const base = {theme:"grid", margin:{left:L,right:14,top:16,bottom:16},
+    styles:{font:"DejaVu", fontSize:8, cellPadding:1.5, textColor:INK, lineColor:[205,202,192], lineWidth:0.1, overflow:"linebreak"},
+    headStyles:{fillColor:INK, textColor:255, font:"DejaVu", fontStyle:"bold"}};
+  const grpStyle = {fillColor:[240,238,231], textColor:[93,102,112], fontStyle:"bold"};
+  const colourStatus = d => { if (d.section!=="body") return; const t = d.cell.raw;
+    if (t==="PASS"||t==="FAIL"||t==="NOTE"){ d.cell.styles.textColor = t==="PASS"?GREEN:t==="FAIL"?RED:AMB; d.cell.styles.fontStyle="bold"; } };
+  let y;
+  const heading = t => { if (y > 262){ doc.addPage(); y = 18; } doc.setFont("DejaVu","bold"); doc.setFontSize(10.5); doc.setTextColor(...INK); doc.text(t, L, y); y += 2.5; };
+  const after = gap => { y = doc.lastAutoTable.finalY + (gap||8); };
+  const caption = t => { doc.setFont("DejaVu","normal"); doc.setFontSize(7.5); doc.setTextColor(93,102,112); doc.text(t, L+W/2, y+2, {align:"center"}); y += 7; };
+
+  doc.setFillColor(...INK); doc.rect(0,0,210,24,"F");
+  doc.setTextColor(255); doc.setFont("DejaVu","bold"); doc.setFontSize(13);
+  doc.text("Eccentric Pad Footing Design to " + edName, L, 11);
+  doc.setFont("DejaVu","normal"); doc.setFontSize(8.5);
+  doc.text(`Project: ${v.proj || "–"}   |   Footing: ${v.mark || "–"}   |   Date: ${today()}`, L, 18);
+
+  const col = M.allOk ? GREEN : RED;
+  doc.setDrawColor(...col); doc.setFillColor(...(M.allOk ? [227,243,233] : [251,229,227])); doc.roundedRect(L,29,W,19,1.5,1.5,"FD");
+  doc.setTextColor(...col); doc.setFont("DejaVu","bold"); doc.setFontSize(15); doc.text(M.allOk?"PASS":"FAIL", L+4, 40.5);
+  doc.setTextColor(...INK); doc.setFont("DejaVu","normal"); doc.setFontSize(8.3);
+  const vt = `${headline()}. ${strip(strengthLine())} ` + (M.allOk ? "All checks satisfied." : `Not satisfied: ${M.failed.map(k=>strip(k.name)).join("; ")}.`);
+  doc.text(doc.splitTextToSize(vt, W-30).slice(0,4), L+26, 34);
+
+  y = 56; heading("1. Input parameters");
+  doc.autoTable({...base, startY:y, head:[["Parameter","Value","Unit"]], body:M.inRows.map(r=>r.map(strip)), columnStyles:{0:{cellWidth:66},2:{cellWidth:24}}});
+  after();
+
+  heading("2. Check summary");
+  const cb = []; let lg = "", i = 0;
+  M.checks.forEach(k => { if (k.group !== lg){ lg = k.group; cb.push([{content:k.group.toUpperCase(), colSpan:6, styles:grpStyle}]); }
+    cb.push([++i, strip(k.name), k.ref, strip(k.demand), strip(k.capacity), statusOf(k)]); });
+  doc.autoTable({...base, startY:y, head:[["#","Check","Clause","Required","Provided / actual","Status"]], body:cb,
+    columnStyles:{0:{cellWidth:7},5:{cellWidth:16,halign:"center"}}, didParseCell:colourStatus});
+  after();
+
+  heading("3. Soil pressure and critical sections");
+  y += 2;
+  try {
+    const ps = plotSvgs(M), imgs = await Promise.all(ps.map(p => svgToImg(p.svg, p.w, p.h)));
+    const w = (W-6)/2, hh = w*ps[0].h/ps[0].w;
+    for (let k=0;k<imgs.length;k+=2){
+      if (y + hh > 272){ doc.addPage(); y = 18; }
+      const row = imgs.slice(k,k+2), x0 = row.length===2 ? L : L+(W-w)/2;
+      row.forEach((im,j) => doc.addImage(im, "JPEG", x0 + j*(w+6), y, w, hh));
+      y += hh + 3;
+    }
+    y -= hh + 3;
+    y += hh + 1; caption("Corner pressures in kPa. Hatched: base lifted off. Dashed: one-way shear sections at d from each column face. Dotted: punching perimeter at d/2.");
+  } catch(e){ doc.setFont("DejaVu","normal"); doc.setFontSize(8); doc.setTextColor(93,102,112); doc.text("The diagrams could not be drawn in this browser. See the on-screen results.", L, y+3); y += 9; }
+  y += 3;
+
+  heading("4. Design procedure");
+  let lp = "";
+  M.steps.forEach((s,i) => {
+    if (s.part !== lp){ lp = s.part; if (y > 265){ doc.addPage(); y = 18; } doc.setFont("DejaVu","bold"); doc.setFontSize(9); doc.setTextColor(...ACC); doc.text(s.part, L, y+1); y += 4; }
+    const body = s.lines.map(l => [{content:strip(l), colSpan:2}]);
+    if (s.note) body.push([{content:strip(s.note), colSpan:2, styles:{textColor:[93,102,112]}}]);
+    doc.autoTable({...base, startY:y, rowPageBreak:"avoid",
+      head:[[`Step ${i+1}. ${strip(s.title)}`, {content:`${edName} ${s.ref}`, styles:{halign:"right"}}]],
+      headStyles:{fillColor:[230,238,246], textColor:ACC, font:"DejaVu", fontStyle:"bold"}, body});
+    after(3);
+  });
+  y += 5;
+
+  heading("5. Outcome and summary");
+  doc.autoTable({...base, startY:y, head:[["Item","Result","Remark","Status"]],
+    body:M.sumRows.map(r => r.g ? [{content:r.g.toUpperCase(), colSpan:4, styles:grpStyle}] : r.map(strip)),
+    foot:[M.outcomeRow.map(strip)], showFoot:"lastPage",
+    footStyles:{fillColor:[240,238,231], textColor:M.allOk?GREEN:RED, font:"DejaVu", fontStyle:"bold"},
+    columnStyles:{0:{cellWidth:42},1:{cellWidth:50},3:{cellWidth:16,halign:"center"}}, didParseCell:colourStatus});
+  after();
+  if (M.actions.length){
+    heading("Items to resolve");
+    doc.autoTable({...base, startY:y, head:[["Check","Clause","Required","Actual","Action"]], body:M.actions.map(r=>r.map(strip))});
+    after();
+  }
+  doc.setFont("DejaVu","normal"); doc.setFontSize(8); doc.setTextColor(93,102,112);
+  const sn = doc.splitTextToSize(strip(SCOPE_NOTE), W); if (y + sn.length*4 > 275){ doc.addPage(); y = 18; }
+  doc.text(sn, L, y); y += sn.length*4 + 6;
+
+  doc.addPage(); y = 18;
+  heading("6. Reinforcement detail");
+  y += 3;
+  const det = detailSvgs(M);
+  try {
+    const [p1, p2] = await Promise.all([svgToImg(det.sec, det.secW, det.secH), svgToImg(det.elev, det.elevW, det.elevH)]);
+    const w1 = Math.min(W, 150), h1 = w1*det.secH/det.secW;
+    doc.addImage(p1, "JPEG", L+(W-w1)/2, y, w1, h1); y += h1 + 1; caption("Plan of bottom reinforcement (to scale)");
+    let w2 = W, h2 = w2*det.elevH/det.elevW; if (h2 > 270 - y - 40){ h2 = Math.max(270 - y - 40, 60); w2 = h2*det.elevW/det.elevH; }
+    doc.addImage(p2, "JPEG", L+(W-w2)/2, y, w2, h2); y += h2 + 1; caption("Section A-A along L (to scale)");
+  } catch(e){ doc.setFont("DejaVu","normal"); doc.setFontSize(8); doc.setTextColor(93,102,112); doc.text("The drawings could not be rendered in this browser. See the bar schedule below.", L, y+3); y += 9; }
+
+  heading("Bar schedule");
+  doc.autoTable({...base, startY:y, head:[["Mark","Description","Location","No.","Dia (mm)","Spacing (mm)","Remark"]], body:M.schedule.map(r=>r.map(c=>strip(String(c))))});
+  after(8);
+
+  heading("7. References");
+  doc.autoTable({...base, theme:"plain", startY:y, body:REFS.map((r,i)=>[`${i+1}.`, strip(r)]), columnStyles:{0:{cellWidth:8}}, styles:{...base.styles, lineWidth:0}});
+  after(10);
+
+  if (y > 275){ doc.addPage(); y = 20; }
+  doc.setDrawColor(205,202,192); doc.setLineWidth(0.2); doc.line(L, y, R, y);
+  doc.setFont("DejaVu","normal"); doc.setFontSize(8.5); doc.setTextColor(93,102,112);
+  doc.text("Developed by " + AUTHOR, L + W/2, y + 6, {align:"center"});
+
+  const pages = doc.getNumberOfPages();
+  for (let i=1;i<=pages;i++){
+    doc.setPage(i); doc.setFont("DejaVu","normal"); doc.setFontSize(7.5); doc.setTextColor(93,102,112);
+    doc.text(`Eccentric footing design, ${edName}${v.mark ? "   |   Footing " + v.mark : ""}`, L, 290);
+    doc.text(`Page ${i} of ${pages}`, R, 290, {align:"right"});
+  }
+  return doc.output("arraybuffer");
+}
+
+function buildXlsx(){
+  const X = window.XLSX, {v, edName} = M, wb = X.utils.book_new();
+  const add = (name, aoa, widths) => { const ws = X.utils.aoa_to_sheet(aoa); ws["!cols"] = widths.map(w=>({wch:w})); X.utils.book_append_sheet(wb, ws, name); };
+  add("Summary", [
+    ["Eccentric pad footing design"],
+    ["Design code", edName], ["Project", v.proj || ""], ["Footing mark", v.mark || ""], ["Date", today()], [],
+    ["Item","Result","Remark","Status"], ...M.sumRows.map(r => r.g ? [r.g.toUpperCase()] : r.map(strip)), M.outcomeRow.map(strip), [],
+    ...(M.actions.length ? [["Items to resolve"],["Check","Clause","Required","Actual","Action"], ...M.actions.map(r=>r.map(strip)), []] : []),
+    [strip(SCOPE_NOTE)], [], ["Developed by " + AUTHOR]
+  ], [36,40,70,10,50]);
+  const lab = {c1:["Column size along L, c1","mm"],c2:["Column size along B, c2","mm"],ox:["Column offset xc","mm"],oy:["Column offset yc","mm"],minContact:["Minimum base in contact","%"],ntL:["Top bars along L","nos"],ntB:["Top bars along B","nos"],dbt:["Top bar diameter","mm"],covT:["Top cover","mm"],fcc:["Column f'c","MPa"],nd:["Number of dowels","nos"],dbd:["Dowel diameter","mm"],
+    PD:["Service dead load, PD","kN"],PL:["Service live load, PL","kN"],Msx:["Service moment about x, Msx","kN·m"],Msy:["Service moment about y, Msy","kN·m"],Hx:["Service horizontal load along x, Hx","kN"],Hy:["Service horizontal load along y, Hy","kN"],
+    Pu:["Factored axial load, Pu","kN"],Mux:["Factored moment about x, Mux","kN·m"],Muy:["Factored moment about y, Muy","kN·m"],Vux:["Factored shear along x, Vux","kN"],Vuy:["Factored shear along y, Vuy","kN"],
+    qa:["Allowable bearing pressure, qa","kPa"],Df:["Depth to footing base, Df","m"],gs:["Soil unit weight","kN/m³"],mu:["Base friction coefficient",""],
+    fc:["Footing f'c","MPa"],fy:["Bar yield, fy","MPa"],Es:["Steel modulus, Es","MPa"],ecu:["Ultimate concrete strain, εcu",""],gc:["Concrete unit weight","kN/m³"],
+    L:["Footing length, L","m"],B:["Footing width, B","m"],h:["Footing thickness, h","mm"],nL:["Bars along L","nos"],dbL:["Diameter, bars along L","mm"],nB:["Bars along B","nos"],dbB:["Diameter, bars along B","mm"],cov:["Clear cover","mm"],agg:["Max aggregate size","mm"]};
+  add("Inputs", [["Parameter","Value","Unit"], ["Code edition", edName, ""], ["Allowable pressure type", QTYPE_NAME[v.qtype], ""], ["Bottom layer", "Bars along " + v.bottom, ""], ["Size effect in shear", SIZE_NAME[v.sizeEff], ""],
+    ...Object.keys(lab).map(k=>[lab[k][0], v[k], lab[k][1]]), ["Effective depth dL", +M.dL.toFixed(1), "mm"], ["Effective depth dB", +M.dB.toFixed(1), "mm"]], [38,30,10]);
+  const proc = [["Step","Title","Clause","Calculation"]]; let lp = "";
+  M.steps.forEach((s,i) => { if (s.part !== lp){ lp = s.part; proc.push(["", s.part.toUpperCase()]); }
+    s.lines.forEach((l,j) => proc.push([j?"":i+1, j?"":strip(s.title), j?"":`${edName} ${s.ref}`, strip(l)])); if (s.note) proc.push(["","","", "Note: " + strip(s.note)]); });
+  add("Procedure", proc, [6,40,34,140]);
+  const ch = [["#","Group","Check","Clause","Required","Provided / actual","Status"]];
+  M.checks.forEach((k,i)=>ch.push([i+1, k.group, strip(k.name), k.ref, strip(k.demand), strip(k.capacity), statusOf(k)]));
+  add("Checks", ch, [5,26,46,24,28,34,10]);
+  const corn = ["x = −L/2, y = +B/2","x = +L/2, y = +B/2","x = +L/2, y = −B/2","x = −L/2, y = −B/2"];
+  add("Soil pressure", [["Corner","Service gross (kPa)","Factored contact (kPa)"], ...corn.map((n,i) => [n, M.SS.ok ? +M.SS.corners[i].toFixed(1) : "", M.SU.ok ? +M.SU.corners[i].toFixed(1) : ""]),
+    [], ["Service resultant ex, ey (mm)", +(M.ex*1000).toFixed(1), +(M.ey*1000).toFixed(1)], ["Service base in contact (%)", M.SS.ok ? +(M.SS.frac*100).toFixed(1) : ""],
+    ["Service maximum compared with qa (kPa)", isFinite(M.qcmp) ? +M.qcmp.toFixed(1) : ""], ["Allowable qa (kPa)", v.qa],
+    ["Factored resultant ex, ey (mm)", +(M.exu*1000).toFixed(1), +(M.eyu*1000).toFixed(1)], ["Factored base in contact (%)", M.SU.ok ? +(M.SU.frac*100).toFixed(1) : ""], ["Factored self weight (kPa)", +M.wu.toFixed(2)]], [36,20,22]);
+  add("Bar schedule", [["Mark","Description","Location","No.","Dia (mm)","Spacing (mm)","Remark"], ...M.schedule.map(r=>r.map(c=>strip(String(c))))], [7,28,34,12,10,14,34]);
+  add("References", [["#","Reference"], ...REFS.map((r,i)=>[i+1, strip(r)]), [], ["Developed by " + AUTHOR]], [6,170]);
+  return X.write(wb, {type:"array", bookType:"xlsx"});
+}
+
+function reportText(){
+  if (!M) return "";
+  const {v, edName} = M;
+  return [
+    "ECCENTRIC PAD FOOTING DESIGN - " + edName,
+    `Project: ${v.proj||"-"}   Footing: ${v.mark||"-"}   Date: ${today()}`, "",
+    "INPUTS", ...M.inRows.map(r=>`  ${strip(r[0])}: ${strip(r[1])} ${r[2]}`), "",
+    "PROCEDURE", ...M.steps.map((s,i)=>`  Step ${i+1}. ${strip(s.title)} [${edName} ${s.ref}]\n` + s.lines.map(l=>"    "+strip(l)).join("\n")), "",
+    "CHECKS", ...M.checks.map((k,i)=>`  ${i+1}. [${k.group}] ${strip(k.name)} [${k.ref}]  req: ${strip(k.demand)}  act: ${strip(k.capacity)}  -> ${statusOf(k)}`), "",
+    "OUTCOME AND SUMMARY", ...[...M.sumRows.filter(r=>!r.g), M.outcomeRow].map(r=>`  ${strip(r[0])}: ${strip(r[1])}${r[2]?"  ("+strip(r[2])+")":""}${r[3]?"  -> "+r[3]:""}`),
+    ...(M.actions.length ? ["", "ITEMS TO RESOLVE", ...M.actions.map(r=>`  ${strip(r[0])} [${r[1]}]: ${strip(r[4])}`)] : []), "",
+    "BAR SCHEDULE", ...M.schedule.map(r=>`  (${r[0]}) ${r[1]}, ${r[2]}: ${r[3]} x Ø${r[4]} ${r[5]!=="–"?"@ "+r[5]:""}  ${strip(r[6])}`), "",
+    strip(SCOPE_NOTE), "", "Developed by " + AUTHOR
+  ].join("\n");
+}
+
+// ---------- wiring ----------
+ids.forEach(k => $(k).value = DEFAULTS[k]);
+$("refs").innerHTML = REFS.map(r=>`<li>${r}</li>`).join("");
+$("form").addEventListener("submit", e => { e.preventDefault(); calculate(); });
+$("form").addEventListener("input", markStale);
+$("form").addEventListener("change", markStale);
+$("pdf").addEventListener("click", async () => {
+  if (!M || stale) return toast("Click Calculate first.", true);
+  toast("Building PDF…");
+  try { const data = await buildPdf(); await save(fileBase()+".pdf", data); } catch(e){ toast("Could not build the PDF: " + e.message, true); }
+});
+$("xls").addEventListener("click", async () => {
+  if (!M || stale) return toast("Click Calculate first.", true);
+  try { await ensureLibs("xlsx"); await save(fileBase()+".xlsx", buildXlsx()); } catch(e){ toast("Could not build the Excel file: " + e.message, true); }
+});
+$("copy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(reportText()); toast("Report text copied."); }
+  catch(e){ toast("Copy was blocked by the browser.", true); }
+});
+</script>
+</body>
+</html>
