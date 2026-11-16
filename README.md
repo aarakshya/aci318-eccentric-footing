@@ -18,7 +18,7 @@ The results show the service and factored pressure plans with the lifted-off are
 
 ## Layout panel
 
-The top of the input panel has a live plan of the footing. Drag the column to set its position, in 25 mm steps (or click it and use the arrow keys, with Shift for 100 mm). Drag the blue handles on the edges to change L and B in 50 mm steps. The plan redraws as you type and shows the kern, the service resultant, the part of the base that lifts off, the distance from each column face to the footing edge, and a dashed outline where the column would give a uniform pressure. Under the plan, a line gives a quick preview of the service soil pressure and contact. The buttons centre the column or move it to the uniform-pressure position.
+The top of the input panel has a live plan of the footing. Drag the column to set its position, in 25 mm steps (or click it and use the arrow keys, with Shift for 100 mm). Drag the blue handles on the edges to change L and B in 50 mm steps. The plan redraws as you type. It shows chain dimensions from each column face to the footing edge, the kern (the middle-third zone that the soil resultant must stay inside for full contact), the service resultant R, the part of the base that lifts off, and a dashed outline where the column would give a uniform pressure. Under the plan, a line gives a quick preview of the service soil pressure and contact. The buttons centre the column or move it to the uniform-pressure position.
 
 ## How to use it
 
