@@ -16,6 +16,10 @@ A browser calculator for an isolated rectangular footing with the column off cen
 
 The results show the service and factored pressure plans with the lifted-off area, the zero-pressure line, the resultant and the critical sections. They also have a plan of the reinforcement, a section through the column with the contact pressure, a summary table and a bar schedule. The input panel shows where to put the column for uniform pressure, the soil utilisation, the smallest thickness that passes shear, the bars each direction needs and any top steel. You can export the full calculation as a PDF or an Excel workbook.
 
+## Layout panel
+
+The top of the input panel has a live plan of the footing. Drag the column to set its position, in 25 mm steps (or click it and use the arrow keys, with Shift for 100 mm). Drag the blue handles on the edges to change L and B in 50 mm steps. The plan redraws as you type and shows the kern, the service resultant, the part of the base that lifts off, the distance from each column face to the footing edge, and a dashed outline where the column would give a uniform pressure. Under the plan, a line gives a quick preview of the service soil pressure and contact. The buttons centre the column or move it to the uniform-pressure position.
+
 ## How to use it
 
 Open `index.html` in a web browser. Nothing needs installing, and everything runs on your computer, so no data leaves the page. The PDF and Excel libraries are in the `lib` folder, which must stay next to `index.html`.
